@@ -1,0 +1,8 @@
+#define SHLIB_PREFIX "lib"
+#define SHLIB_SUFFIX "so"
+#define SHLIB_VERSION "3"
+#define NSS_SHLIB_VERSION "3"
+#define SOFTOKEN_SHLIB_VERSION "3"
+#define SOFTOKEN_LIB_NAME "libsoftokn3.so"
+#define SQLITE_UNSAFE_THREADS 1
+#define NSS_STATIC_SOFTOKEN 1
