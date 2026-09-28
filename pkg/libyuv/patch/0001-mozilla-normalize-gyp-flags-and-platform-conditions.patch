@@ -1,0 +1,78 @@
+From 0000000000000000000000000000000000000001 Mon Sep 17 00:00:00 2001
+Subject: [PATCH 1/6] Normalize gyp flags and platform conditions for mozilla
+
+Vendor-side (UXP/mozilla) build normalization of upstream libyuv.gyp:
+- rename `cflags!`/`cflags` to `cflags_mozilla!`/`cflags_mozilla`, which
+  is what mozilla's gyp integration understands;
+- drop the iOS condition around libyuv_disable_jpeg and the
+  android-only dynamic-linker ldflags, none of which apply to the
+  mozilla build;
+- drop the editor modeline block.
+diff --git a/libyuv.gyp b/libyuv.gyp
+index f73a1a4..82cab81 100644
+--- a/libyuv.gyp
++++ b/libyuv.gyp
+@@ -64,7 +64,7 @@
+           'defines': [
+             'LIBYUV_NEON',
+           ],
+-          'cflags!': [
++          'cflags_mozilla!': [
+             '-mfpu=vfp',
+             '-mfpu=vfpv3',
+             '-mfpu=vfpv3-d16',
+@@ -73,14 +73,14 @@
+           'conditions': [
+             # Disable LTO in libyuv_neon target due to gcc 4.9 compiler bug.
+             ['clang == 0 and use_lto == 1', {
+-              'cflags!': [
++              'cflags_mozilla!': [
+                 '-flto',
+                 '-ffat-lto-objects',
+               ],
+             }],
+             # arm64 does not need -mfpu=neon option as neon is not optional
+             ['target_arch != "arm64"', {
+-              'cflags': [
++              'cflags_mozilla': [
+                 '-mfpu=neon',
+                 # '-marm',  # arm32 not thumb
+               ],
+@@ -92,7 +92,7 @@
+             'LIBYUV_MSA',
+           ],
+         }],
+-        ['OS != "ios" and libyuv_disable_jpeg != 1', {
++        ['libyuv_disable_jpeg != 1', {
+           'defines': [
+             'HAVE_JPEG'
+           ],
+@@ -135,18 +135,6 @@
+           'include',
+           '.',
+         ],
+-        'conditions': [
+-          ['OS == "android" and target_arch == "arm64"', {
+-            'ldflags': [
+-              '-Wl,--dynamic-linker,/system/bin/linker64',
+-            ],
+-          }],
+-          ['OS == "android" and target_arch != "arm64"', {
+-            'ldflags': [
+-              '-Wl,--dynamic-linker,/system/bin/linker',
+-            ],
+-          }],
+-        ], #conditions
+       },
+       'sources': [
+         '<@(libyuv_sources)',
+@@ -154,9 +142,3 @@
+     },
+   ], # targets.
+ }
+-
+-# Local Variables:
+-# tab-width:2
+-# indent-tabs-mode:nil
+-# End:
+-# vim: set expandtab tabstop=2 shiftwidth=2:

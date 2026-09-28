@@ -1,0 +1,120 @@
+From 0000000000000000000000000000000000000005 Mon Sep 17 00:00:00 2001
+Subject: [PATCH 5/6] Add mozilla build integration files
+
+Add moz.build (gyp-driven build glue with the non-unified source list)
+and the build/ helpers (dir_exists.py, find_sdk.py and its UXP fork
+find_sdk_uxp.py) that mozilla's build expects next to the vendored
+tree. These are vendoring additions; upstream ships none of them.
+diff --git a/build/dir_exists.py b/build/dir_exists.py
+new file mode 100644
+index 0000000..be4c54d
+--- /dev/null
++++ b/build/dir_exists.py
+@@ -0,0 +1,13 @@
++#!/usr/bin/env python
++# This Source Code Form is subject to the terms of the Mozilla Public
++# License, v. 2.0. If a copy of the MPL was not distributed with this
++# file, You can obtain one at http://mozilla.org/MPL/2.0/.
++import sys
++import subprocess
++import os.path
++
++def main():
++  return subprocess.call([sys.executable, "../webrtc/trunk/build/dir_exists.py"] + sys.argv[1:])
++
++if __name__ == '__main__':
++  sys.exit(main())
+diff --git a/build/mac/find_sdk.py b/build/mac/find_sdk.py
+new file mode 100755
+index 0000000..7fd9a98
+--- /dev/null
++++ b/build/mac/find_sdk.py
+@@ -0,0 +1,12 @@
++#!/usr/bin/env python
++# This Source Code Form is subject to the terms of the Mozilla Public
++# License, v. 2.0. If a copy of the MPL was not distributed with this
++# file, You can obtain one at http://mozilla.org/MPL/2.0/.
++import sys
++import subprocess
++
++def main():
++  return subprocess.call([sys.executable, "../webrtc/trunk/build/mac/find_sdk.py"] + sys.argv[1:])
++
++if __name__ == '__main__':
++  sys.exit(main())
+diff --git a/build/mac/find_sdk_uxp.py b/build/mac/find_sdk_uxp.py
+new file mode 100644
+index 0000000..b81dba9
+--- /dev/null
++++ b/build/mac/find_sdk_uxp.py
+@@ -0,0 +1,12 @@
++#!/usr/bin/env python
++# This Source Code Form is subject to the terms of the Mozilla Public
++# License, v. 2.0. If a copy of the MPL was not distributed with this
++# file, You can obtain one at http://mozilla.org/MPL/2.0/.
++import sys
++import subprocess
++
++def main():
++  return subprocess.call([sys.executable, "../webrtc/trunk/build/mac/find_sdk_uxp.py"] + sys.argv[1:])
++
++if __name__ == '__main__':
++  sys.exit(main())
+diff --git a/moz.build b/moz.build
+new file mode 100644
+index 0000000..5565eb8
+--- /dev/null
++++ b/moz.build
+@@ -0,0 +1,52 @@
++# -*- Mode: python; indent-tabs-mode: nil; tab-width: 40 -*-
++# This Source Code Form is subject to the terms of the Mozilla Public
++# License, v. 2.0. If a copy of the MPL was not distributed with this
++# file, You can obtain one at http://mozilla.org/MPL/2.0/.
++
++include('/build/gyp.mozbuild')
++
++GYP_DIRS += ['.']
++
++libyuv_non_unified_sources = [
++    'source/convert.cc',
++    'source/convert_argb.cc',
++    'source/convert_from.cc',
++    'source/convert_from_argb.cc',
++    'source/mjpeg_decoder.cc',
++    'source/rotate_argb.cc',
++    'source/row_common.cc',
++    'source/scale.cc',
++    'source/scale_argb.cc',
++    'source/scale_common.cc',
++    'source/scale_uv.cc',
++]
++
++if CONFIG['CPU_ARCH'] == 'arm':
++    libyuv_non_unified_sources += [
++        'source/compare_neon.cc',
++        'source/rotate_neon.cc',
++        'source/row_neon.cc',
++        'source/scale_neon.cc',
++    ]
++if CONFIG['CPU_ARCH'] == 'aarch64':
++    libyuv_non_unified_sources += [
++        'source/compare_neon64.cc',
++        'source/rotate_neon64.cc',
++        'source/row_neon64.cc',
++        'source/scale_neon64.cc',
++    ]
++if CONFIG['CPU_ARCH'] == 'loongarch64':
++    libyuv_non_unified_sources += [
++        'source/rotate_lsx.cc',
++        'source/row_lasx.cc',
++        'source/row_lsx.cc',
++        'source/scale_lsx.cc',
++    ]
++
++GYP_DIRS['.'].input = 'libyuv.gyp'
++GYP_DIRS['.'].variables = gyp_vars
++GYP_DIRS['.'].sandbox_vars['FINAL_LIBRARY'] = 'xul'
++GYP_DIRS['.'].non_unified_sources += sorted(libyuv_non_unified_sources)
++
++# We allow warnings for third-party code that can be updated from upstream.
++GYP_DIRS['.'].sandbox_vars['ALLOW_COMPILER_WARNINGS'] = True
