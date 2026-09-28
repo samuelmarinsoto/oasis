@@ -4,3 +4,7 @@
 fetch
 local.ninja
 .*.swp
+/scratch/
+pkg/icu/data/icudt78l.dat
+*.o
+pm-src
