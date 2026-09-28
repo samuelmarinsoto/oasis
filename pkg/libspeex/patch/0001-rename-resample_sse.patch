@@ -1,0 +1,14 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: oasis <oasis@localhost>
+Date: Sat, 26 Sep 2026 18:57:53 -0600
+Subject: [PATCH] flatten resample_sse.h to resample_sse.c
+
+Mozilla builds the SSE inner-product code as a standalone translation
+unit; upstream ships it as the header libspeexdsp/resample_sse.h. UXP
+update.sh copies it to resample_sse.c; replicate with a pure rename,
+no content change.
+---
+diff --git a/libspeexdsp/resample_sse.h b/libspeexdsp/resample_sse.c
+similarity index 100%
+rename from libspeexdsp/resample_sse.h
+rename to libspeexdsp/resample_sse.c

@@ -1,0 +1,256 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: oasis <oasis@localhost>
+Date: Sat, 26 Sep 2026 18:57:53 -0600
+Subject: [PATCH] resampler: pick SSE kernels at runtime via simd_detect
+
+From UXP simd-detect-runtime.patch: stop including resample_sse.h
+straight into resample.c; instead dispatch inner_product_single/double
+and interpolate_product_* at runtime through
+moz_speex_have_{single,double}_simd(), implemented in simd_detect.{h,cpp}
+on top of mozilla/SSE.h. The functions in resample_sse.c lose their
+static inline so they can serve as the runtime-selected kernels.
+
+The resample_neon.c hunk is dropped: the NEON TU is not built on
+x86_64-linux-musl and is not replicated in this package.
+
+simd_detect.{h,cpp} are the files hg-added to UXP (they are not part
+of any update.sh patch).
+---
+diff --git a/libspeexdsp/resample.c b/libspeexdsp/resample.c
+index edbd65b..7866203 100644
+--- a/libspeexdsp/resample.c
++++ b/libspeexdsp/resample.c
+@@ -96,13 +96,7 @@ static void speex_free (void *ptr) {free(ptr);}
+ #define NULL 0
+ #endif
+ 
+-#ifdef _USE_SSE
+-#include "resample_sse.h"
+-#endif
+-
+-#ifdef _USE_NEON
+-#include "resample_neon.h"
+-#endif
++#include "simd_detect.h"
+ 
+ /* Numer of elements to allocate on the stack */
+ #ifdef VAR_ARRAYS
+@@ -348,7 +342,9 @@ static int resampler_basic_direct_single(SpeexResamplerState *st, spx_uint32_t c
+       const spx_word16_t *sinct = & sinc_table[samp_frac_num*N];
+       const spx_word16_t *iptr = & in[last_sample];
+ 
+-#ifndef OVERRIDE_INNER_PRODUCT_SINGLE
++#ifdef OVERRIDE_INNER_PRODUCT_SINGLE
++      if (!moz_speex_have_single_simd()) {
++#endif
+       int j;
+       sum = 0;
+       for(j=0;j<N;j++) sum += MULT16_16(sinct[j], iptr[j]);
+@@ -366,8 +362,10 @@ static int resampler_basic_direct_single(SpeexResamplerState *st, spx_uint32_t c
+       sum = accum[0] + accum[1] + accum[2] + accum[3];
+ */
+       sum = SATURATE32PSHR(sum, 15, 32767);
+-#else
++#ifdef OVERRIDE_INNER_PRODUCT_SINGLE
++      } else {
+       sum = inner_product_single(sinct, iptr, N);
++      }
+ #endif
+ 
+       out[out_stride * out_sample++] = sum;
+@@ -406,7 +404,9 @@ static int resampler_basic_direct_double(SpeexResamplerState *st, spx_uint32_t c
+       const spx_word16_t *sinct = & sinc_table[samp_frac_num*N];
+       const spx_word16_t *iptr = & in[last_sample];
+ 
+-#ifndef OVERRIDE_INNER_PRODUCT_DOUBLE
++#ifdef OVERRIDE_INNER_PRODUCT_DOUBLE
++      if(moz_speex_have_double_simd()) {
++#endif
+       int j;
+       double accum[4] = {0,0,0,0};
+ 
+@@ -417,8 +417,10 @@ static int resampler_basic_direct_double(SpeexResamplerState *st, spx_uint32_t c
+         accum[3] += sinct[j+3]*iptr[j+3];
+       }
+       sum = accum[0] + accum[1] + accum[2] + accum[3];
+-#else
++#ifdef OVERRIDE_INNER_PRODUCT_DOUBLE
++      } else {
+       sum = inner_product_double(sinct, iptr, N);
++      }
+ #endif
+ 
+       out[out_stride * out_sample++] = PSHR32(sum, 15);
+@@ -462,7 +464,9 @@ static int resampler_basic_interpolate_single(SpeexResamplerState *st, spx_uint3
+       spx_word16_t interp[4];
+ 
+ 
+-#ifndef OVERRIDE_INTERPOLATE_PRODUCT_SINGLE
++#ifdef OVERRIDE_INTERPOLATE_PRODUCT_SINGLE
++      if (!moz_speex_have_single_simd()) {
++#endif
+       int j;
+       spx_word32_t accum[4] = {0,0,0,0};
+ 
+@@ -477,9 +481,11 @@ static int resampler_basic_interpolate_single(SpeexResamplerState *st, spx_uint3
+       cubic_coef(frac, interp);
+       sum = MULT16_32_Q15(interp[0],SHR32(accum[0], 1)) + MULT16_32_Q15(interp[1],SHR32(accum[1], 1)) + MULT16_32_Q15(interp[2],SHR32(accum[2], 1)) + MULT16_32_Q15(interp[3],SHR32(accum[3], 1));
+       sum = SATURATE32PSHR(sum, 15, 32767);
+-#else
++#ifdef OVERRIDE_INTERPOLATE_PRODUCT_SINGLE
++      } else {
+       cubic_coef(frac, interp);
+       sum = interpolate_product_single(iptr, st->sinc_table + st->oversample + 4 - offset - 2, N, st->oversample, interp);
++      }
+ #endif
+       
+       out[out_stride * out_sample++] = sum;
+@@ -525,7 +531,9 @@ static int resampler_basic_interpolate_double(SpeexResamplerState *st, spx_uint3
+       spx_word16_t interp[4];
+ 
+ 
+-#ifndef OVERRIDE_INTERPOLATE_PRODUCT_DOUBLE
++#ifdef OVERRIDE_INTERPOLATE_PRODUCT_DOUBLE
++      if (!moz_speex_have_double_simd()) {
++#endif
+       int j;
+       double accum[4] = {0,0,0,0};
+ 
+@@ -539,9 +547,11 @@ static int resampler_basic_interpolate_double(SpeexResamplerState *st, spx_uint3
+ 
+       cubic_coef(frac, interp);
+       sum = MULT16_32_Q15(interp[0],accum[0]) + MULT16_32_Q15(interp[1],accum[1]) + MULT16_32_Q15(interp[2],accum[2]) + MULT16_32_Q15(interp[3],accum[3]);
+-#else
++#ifdef OVERRIDE_INTERPOLATE_PRODUCT_DOUBLE
++      } else {
+       cubic_coef(frac, interp);
+       sum = interpolate_product_double(iptr, st->sinc_table + st->oversample + 4 - offset - 2, N, st->oversample, interp);
++      }
+ #endif
+       
+       out[out_stride * out_sample++] = PSHR32(sum,15);
+diff --git a/libspeexdsp/resample_sse.c b/libspeexdsp/resample_sse.c
+index 64be8a1..2eb7929 100644
+--- a/libspeexdsp/resample_sse.c
++++ b/libspeexdsp/resample_sse.c
+@@ -34,10 +34,12 @@
+    SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+ 
++#include "simd_detect.h"
++
+ #include <xmmintrin.h>
+ 
+ #define OVERRIDE_INNER_PRODUCT_SINGLE
+-static inline float inner_product_single(const float *a, const float *b, unsigned int len)
++float inner_product_single(const float *a, const float *b, unsigned int len)
+ {
+    int i;
+    float ret;
+@@ -54,7 +56,7 @@ static inline float inner_product_single(const float *a, const float *b, unsigne
+ }
+ 
+ #define OVERRIDE_INTERPOLATE_PRODUCT_SINGLE
+-static inline float interpolate_product_single(const float *a, const float *b, unsigned int len, const spx_uint32_t oversample, float *frac) {
++float interpolate_product_single(const float *a, const float *b, unsigned int len, const spx_uint32_t oversample, float *frac) {
+   int i;
+   float ret;
+   __m128 sum = _mm_setzero_ps();
+@@ -75,7 +77,7 @@ static inline float interpolate_product_single(const float *a, const float *b, u
+ #include <emmintrin.h>
+ #define OVERRIDE_INNER_PRODUCT_DOUBLE
+ 
+-static inline double inner_product_double(const float *a, const float *b, unsigned int len)
++double inner_product_double(const float *a, const float *b, unsigned int len)
+ {
+    int i;
+    double ret;
+@@ -97,7 +99,7 @@ static inline double inner_product_double(const float *a, const float *b, unsign
+ }
+ 
+ #define OVERRIDE_INTERPOLATE_PRODUCT_DOUBLE
+-static inline double interpolate_product_double(const float *a, const float *b, unsigned int len, const spx_uint32_t oversample, float *frac) {
++double interpolate_product_double(const float *a, const float *b, unsigned int len, const spx_uint32_t oversample, float *frac) {
+   int i;
+   double ret;
+   __m128d sum;
+diff --git a/libspeexdsp/simd_detect.cpp b/libspeexdsp/simd_detect.cpp
+new file mode 100644
+index 0000000..26c9e03
+--- /dev/null
++++ b/libspeexdsp/simd_detect.cpp
+@@ -0,0 +1,26 @@
++/* This Source Code Form is subject to the terms of the Mozilla Public
++ * License, v. 2.0. If a copy of the MPL was not distributed with this
++ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
++
++#include "simd_detect.h"
++
++#include "mozilla/SSE.h"
++#include "mozilla/arm.h"
++
++#ifdef _USE_SSE2
++int moz_speex_have_double_simd() {
++  return mozilla::supports_sse2() ? 1 : 0;
++}
++#endif
++
++#ifdef _USE_SSE
++int moz_speex_have_single_simd() {
++  return mozilla::supports_sse() ? 1 : 0;
++}
++#endif
++
++#ifdef _USE_NEON
++int moz_speex_have_single_simd() {
++  return mozilla::supports_neon() ? 1 : 0;
++}
++#endif
+diff --git a/libspeexdsp/simd_detect.h b/libspeexdsp/simd_detect.h
+new file mode 100644
+index 0000000..7efa7b0
+--- /dev/null
++++ b/libspeexdsp/simd_detect.h
+@@ -0,0 +1,42 @@
++/* This Source Code Form is subject to the terms of the Mozilla Public
++ * License, v. 2.0. If a copy of the MPL was not distributed with this
++ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
++
++#ifndef simd_detect_h
++#define simd_detect_h
++
++#include "speex_resampler.h"
++#include "arch.h"
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++int moz_speex_have_single_simd();
++int moz_speex_have_double_simd();
++
++#if defined(_USE_SSE) || defined(_USE_NEON)
++#define OVERRIDE_INNER_PRODUCT_SINGLE
++#define inner_product_single CAT_PREFIX(RANDOM_PREFIX,_inner_product_single)
++spx_word32_t inner_product_single(const spx_word16_t *a, const spx_word16_t *b, unsigned int len);
++#endif
++#if defined(_USE_SSE)
++#define OVERRIDE_INTERPOLATE_PRODUCT_SINGLE
++#define interpolate_product_single CAT_PREFIX(RANDOM_PREFIX,_interpolate_product_single)
++spx_word32_t interpolate_product_single(const spx_word16_t *a, const spx_word16_t *b, unsigned int len, const spx_uint32_t oversample, float *frac);
++#endif
++
++#if defined(_USE_SSE2)
++#define OVERRIDE_INNER_PRODUCT_DOUBLE
++#define inner_product_double CAT_PREFIX(RANDOM_PREFIX,_inner_product_double)
++double inner_product_double(const float *a, const float *b, unsigned int len);
++#define OVERRIDE_INTERPOLATE_PRODUCT_DOUBLE
++#define interpolate_product_double CAT_PREFIX(RANDOM_PREFIX,_interpolate_product_double)
++double interpolate_product_double(const float *a, const float *b, unsigned int len, const spx_uint32_t oversample, float *frac);
++#endif
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif // simd_detect_h
