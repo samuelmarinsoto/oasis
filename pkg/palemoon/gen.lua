@@ -1,0 +1,324 @@
+-- Pale Moon (Goanna) browser, shipped as OMoon.
+-- Sources from the pinned app + UXP trees (lists
+-- emitted by the dev-time tools in the OMoon fork), generated data committed under
+-- gen/. Static PIE link lands at 5.1.
+cflags{
+	'-D _LARGEFILE64_SOURCE',
+	'-D _FILE_OFFSET_BITS=64',
+	-- gecko C++ dialect (gt OS_CXXFLAGS)
+	'-fno-exceptions', '-fno-rtti', '-fno-sized-deallocation',
+	'-flifetime-dse=1', '-fno-strict-aliasing', '-fno-math-errno',
+	'-D MOZILLA_INTERNAL_API',
+	'-D IMPL_LIBXUL',
+	'-D MOZILLA_CLIENT',
+	'-D JS_CODEGEN_X64',
+	'-D JS_PUNBOX64',
+	'-D MOZ_WAYLAND',
+	'-D VAR_ARRAYS',
+	'-D GDK_VERSION_MIN_REQUIRED=GDK_VERSION_3_4',
+	-- string-valued config vars (autoconf.mk); the \" survives sh so the
+	-- compiler sees a quoted C literal (gio LIBDIR pattern)
+	[[-D OS_ARCH=\"Linux\"]],
+	[[-D OS_TARGET=\"Linux\"]],
+	[[-D OS_TEST=\"x86_64\"]],
+	[[-D MOZ_WIDGET_TOOLKIT=\"gtk3\"]],
+	[[-D MOZ_APP_NAME=\"palemoon\"]],
+	[[-D MOZ_APP_DISPLAYNAME=\"OMoon\"]],
+	'-include $dir/gen/include/mozilla/Char16.h',
+	'-I $dir/gen/include',
+	'-I $srcdir',
+	'-I $srcdir/palemoon',
+	'-I pkg/uxp/src',
+	'-include $dir/gen/include/mozilla-config.h',
+	-- external dependencies (house static stack)
+	'-isystem $builddir/pkg/nspr/include',
+	'-isystem $builddir/pkg/nss/include/nss',
+	'-isystem $builddir/pkg/nss/include/ssl',
+	'-isystem $builddir/pkg/nss/include/smime',
+	'-isystem $builddir/pkg/icu/src/common',
+	'-isystem $builddir/pkg/icu/src/i18n',
+	'-isystem $builddir/pkg/sqlite/include',
+	'-isystem $builddir/pkg/zlib/include',
+	'-isystem $builddir/pkg/libpng/include',
+	'-isystem $builddir/pkg/freetype/include',
+	'-isystem $builddir/pkg/fontconfig/include',
+	'-isystem $builddir/pkg/pixman/include',
+	'-isystem $builddir/pkg/cairo/include',
+	'-isystem $builddir/pkg/harfbuzz/include',
+	'-isystem $builddir/pkg/fribidi/include',
+	'-isystem $builddir/pkg/libffi/include',
+	'-isystem $builddir/pkg/libxkbcommon/include',
+	'-isystem $builddir/pkg/libepoxy/include',
+	'-isystem $builddir/pkg/wayland/include',
+	'-isystem $builddir/pkg/libevent/src',
+	'-isystem $builddir/pkg/linux-headers/include',
+	'-I $builddir/pkg/glib/include/glib-2.0',
+	'-I $builddir/pkg/glib/include/glib-2.0/glib',
+	'-I $builddir/pkg/glib/include/glib-2.0/gobject',
+	'-I $builddir/pkg/gio/include/glib-2.0',
+	'-I $builddir/pkg/gio/include/glib-2.0/gio',
+	'-I $builddir/pkg/gmodule/include/glib-2.0',
+	'-I $builddir/pkg/pango/include/pango-1.0',
+	'-I $builddir/pkg/gdk-pixbuf/include/gdk-pixbuf-2.0',
+	'-I $builddir/pkg/gtk3/include/gtk-3.0',
+	'-I $builddir/pkg/gtk3/gdk',
+	'-I $builddir/pkg/gtk3/gtk',
+	'-I $builddir/pkg/atk/include/atk-1.0',
+	'-Wno-error=implicit-function-declaration',
+	'-Wno-error=deprecated-declarations',
+	'-Wno-error=unused-function',
+	'-Wno-error=unused-variable',
+	'-Wno-error=unused-parameter',
+	'-Wno-error=sign-compare',
+	'-Wno-error=comment',
+	'-Wno-error=parentheses',
+	'-Wno-error=switch',
+	'-Wno-error=return-type',
+	'-Wno-error=reorder',
+	'-Wno-error=narrowing',
+	'-Wno-error=format',
+	'-Wno-error=class-memaccess',
+	'-Wno-error=extra',
+	'-Wno-error=ignored-qualifiers',
+	'-Wno-error=pessimizing-move',
+	'-Wno-error=sizeof-array-argument',
+	'-Wno-error=varargs',
+	'-Wno-error=incompatible-pointer-types',
+	'-Wno-error=int-conversion',
+}
+
+-- ground-truth build defines (ACDEFINES committed as gen/defines.txt)
+for line in iterlines('gen/defines.txt') do
+	cflags{line}
+end
+
+local uxp = 'pkg/uxp/src/'
+
+-- vendored include roots MUST precede the per-source-dir -I chain:
+-- several (chromium/src) own a 'base/' dir whose headers shadow others;
+-- the canonical root has to win
+cflags{
+	'-I $dir/gen/include/ipdl',
+	'-I $dir/gen/include/mozilla/dom',
+	'-I $builddir/pkg/gtk3',
+	'-I pkg/uxp/src/ipc/chromium/src',
+	'-I pkg/uxp/src/intl/uconv/util',
+	'-I pkg/uxp/src/hal/sandbox',
+	'-I pkg/uxp/src/testing/gtest/mozilla',
+	'-I pkg/uxp/src/uriloader/exthandler/unix',
+	-- libevent: headers only (the chromium third-party unifies use them;
+	-- the archive joins the link only if undefined refs appear)
+	'-isystem $builddir/pkg/libevent/include',
+}
+
+-- dependency packages (headers installed by each pkg; archives join the
+-- final link)
+cflags{
+	'-isystem $builddir/pkg/libvpx/include',
+	'-isystem $builddir/pkg/libogg/include',
+	'-isystem $builddir/pkg/libvorbis/include',
+	'-isystem $builddir/pkg/libopus/include',
+	'-isystem $builddir/pkg/libtheora/include',
+	'-isystem $builddir/pkg/libwebp/include',
+	'-isystem $builddir/pkg/brotli/include',
+	'-isystem $builddir/pkg/woff2/include',
+	'-isystem $builddir/pkg/graphite2/include',
+	'-isystem $builddir/pkg/libsoundtouch/include',
+	'-isystem $builddir/pkg/kissfft/include',
+	'-isystem $builddir/pkg/libspeex/include',
+	'-isystem $builddir/pkg/ots/include',
+	'-isystem $builddir/pkg/libcubeb/include',
+	'-isystem $builddir/pkg/nestegg/include',
+	'-isystem $builddir/pkg/libjxl/include',
+	'-isystem $builddir/pkg/libyuv/include',
+	'-isystem $builddir/pkg/uxp/fdlibm/include',
+	'-isystem $builddir/pkg/uxp/qcms/include',
+	'-isystem $builddir/pkg/uxp/angle/include',
+	'-isystem $builddir/pkg/uxp/libmkv/include',
+	'-isystem $builddir/pkg/uxp/psshparser/include',
+	'-isystem $builddir/pkg/uxp/libstagefright/include',
+}
+
+-- skia stays inline (no standalone package)
+cflags{
+	'-I pkg/uxp/src/gfx/skia/skia/include/config',
+	'-I pkg/uxp/src/gfx/skia/skia/include/core',
+	'-I pkg/uxp/src/gfx/skia/skia/include/gpu',
+	'-I pkg/uxp/src/gfx/skia/skia/include/utils',
+	'-I pkg/uxp/src/gfx/skia/skia/include/effects',
+	'-I pkg/uxp/src/gfx/skia/skia/include/pathops',
+	'-I pkg/uxp/src/gfx/skia/skia/include/ports',
+	'-I pkg/uxp/src/gfx/skia/skia/include/private',
+	'-I pkg/uxp/src/gfx/skia/skia/include/images',
+	'-I pkg/uxp/src/gfx/skia/skia/include/codec',
+	'-I pkg/uxp/src/gfx/skia/skia/include/svg',
+	'-I pkg/uxp/src/gfx/skia/skia/include/views',
+}
+
+-- every directory owning a compiled source (and every generated-header dir)
+-- goes on the -I chain, replacing mozbuild's LOCAL_INCLUDES
+for line in iterlines('gen/source-dirs.txt') do
+	local kind, d = line:match('^(%w+):(.*)$')
+	local root
+	if kind == 'app' then root = '$srcdir/palemoon/'
+	elseif kind == 'uxp' then root = uxp
+	else root = '$dir/gen/include/' end
+	-- dirs named 'base' would shadow the canonical roots above
+	if d ~= 'ipc/chromium/src/base' and not d:match('(^|/)base$') then
+		cflags{'-I ' .. root .. d}
+	end
+end
+
+local objs = {}
+
+-- include dirs for unified build files (their quoted includes name the
+-- member sources, resolved against the real source directory)
+local uidirs = {}
+for line in iterlines('gen/uxp-objects.txt') do
+	if line:match('^%$dir/gen/src/.*/Unified_') then
+		local d = line:match('^%$dir/gen/src/(.*)/[^/]+$')
+		if d then uidirs[d] = true end
+	end
+end
+for d in pairs(uidirs) do
+	cflags{'-I ' .. uxp .. d}
+end
+
+local function addobj(src, obj)
+	local deps
+	if pkg.deps then deps = '$gendir/deps' end
+	-- per-file SIMD ISA flags (mozbuild SOURCES[...].flags equivalents)
+	local extra
+	if src:match('avx512') then
+		extra = ' -mavx512f -mavx512cd -mavx512vl -mavx512dq -mavx512bw'
+	elseif src:match('avx2') then
+		extra = ' -mavx2'
+	elseif src:match('_avx%.') or src:match('avx%.') then
+		extra = ' -mavx'
+	elseif src:match('ssse3') then
+		extra = ' -mssse3'
+	elseif src:match('sse4_1') or src:match('sse41') then
+		extra = ' -msse4.1'
+	elseif src:match('sse4_2') then
+		extra = ' -msse4.2'
+	end
+	-- per-file exceptions to the gecko -fno-exceptions/-fno-rtti dialect
+	-- (gt compiled these with rtti enabled; dynamic_cast is real here)
+	local rtti = src:match('dom/u2f/Unified_cpp_dom_u2f0%.cpp$')
+		or src:match('storage/Unified_cpp_storage0%.cpp$')
+		or src:match('accessible/generic/HyperTextAccessible%.cpp$')
+		or src:match('netwerk/build/nsNetModule%.cpp$')
+		or src:match('gen/src/js/src/')
+		or src:match('gfx/thebes/gfxPlatformGtk%.cpp$')
+		or src:match('gen/src/toolkit/xre/Unified_cpp_toolkit_xre0%.cpp$')
+	if rtti then extra = (extra or '') .. ' -frtti -fexceptions' end
+	local cf
+	if deps then cf = {src, '||', deps} else cf = src end
+	local args
+	if extra then args = {cflags = '$cflags' .. extra} end
+	build('cc', obj, cf, args)
+	objs[#objs + 1] = obj
+end
+
+for line in iterlines('gen/uxp-objects.txt') do
+	local src, base
+	if line:sub(1, 1) == '$' then
+		src = line
+		base = line:gsub('^%$dir/gen/src/', 'gen/src/')
+	else
+		src = uxp .. line
+		base = 'uxp/' .. line
+	end
+	if not src:match('%.s$') and not src:match('%.asm$') then
+		addobj(src, '$outdir/' .. base .. '.o')
+	end
+end
+for line in iterlines('gen/app-objects.txt') do
+	local src, base
+	if line:sub(1, 1) == '$' then
+		src = line
+		base = line:gsub('^%$dir/gen/src/', 'gen/src/')
+	else
+		src = '$srcdir/palemoon/' .. line
+		base = 'app/' .. line
+	end
+	if not src:match('%.s$') and not src:match('%.asm$') then
+		addobj(src, '$outdir/' .. base .. '.o')
+	end
+end
+
+pkg.deps = {
+	'pkg/glib/headers',
+	'pkg/gio/headers',
+	'pkg/gmodule/headers',
+	'pkg/pango/headers',
+	'pkg/gdk-pixbuf/headers',
+	'pkg/cairo/headers',
+	'pkg/fribidi/headers',
+	'pkg/harfbuzz/headers',
+	'pkg/atk/headers',
+	'pkg/wayland/headers',
+	'pkg/wayland-protocols/headers',
+	'pkg/libepoxy/headers',
+	'pkg/libxkbcommon/headers',
+	'pkg/libvpx/headers',
+	'pkg/libogg/headers',
+	'pkg/libvorbis/headers',
+	'pkg/libopus/headers',
+	'pkg/libtheora/headers',
+	'pkg/libwebp/headers',
+	'pkg/brotli/headers',
+	'pkg/woff2/headers',
+	'pkg/graphite2/headers',
+	'pkg/libsoundtouch/headers',
+	'pkg/kissfft/headers',
+	'pkg/libspeex/headers',
+	'pkg/ots/headers',
+	'pkg/libcubeb/headers',
+	'pkg/nestegg/headers',
+	'pkg/libjxl/headers',
+	'pkg/libyuv/headers',
+	'pkg/uxp/fdlibm/headers',
+	'pkg/uxp/qcms/headers',
+	'pkg/uxp/angle/headers',
+	'pkg/uxp/libmkv/headers',
+	'pkg/uxp/psshparser/headers',
+	'pkg/uxp/libstagefright/headers',
+	'pkg/libevent/headers',
+	'pkg/nspr/headers',
+	'pkg/nss/headers',
+	'pkg/icu/headers',
+	'pkg/sqlite/headers',
+	'pkg/libevent/headers',
+	'pkg/linux-headers/headers',
+	'pkg/uxp/fetch',
+	'pkg/palemoon/fetch',
+}
+
+objs[#objs + 1] = '$builddir/pkg/libvpx/libvpx.a'
+objs[#objs + 1] = '$builddir/pkg/libogg/libogg.a'
+objs[#objs + 1] = '$builddir/pkg/libvorbis/libvorbis.a'
+objs[#objs + 1] = '$builddir/pkg/libopus/libopus.a'
+objs[#objs + 1] = '$builddir/pkg/libtheora/libtheora.a'
+objs[#objs + 1] = '$builddir/pkg/libwebp/libwebp.a'
+objs[#objs + 1] = '$builddir/pkg/brotli/libbrotli.a'
+objs[#objs + 1] = '$builddir/pkg/woff2/libwoff2.a'
+objs[#objs + 1] = '$builddir/pkg/graphite2/libgraphite2.a'
+objs[#objs + 1] = '$builddir/pkg/libsoundtouch/libsoundtouch.a'
+objs[#objs + 1] = '$builddir/pkg/kissfft/libkissfft.a'
+objs[#objs + 1] = '$builddir/pkg/libspeex/libspeex.a'
+objs[#objs + 1] = '$builddir/pkg/ots/libots.a'
+objs[#objs + 1] = '$builddir/pkg/libcubeb/liblibcubeb.a'
+objs[#objs + 1] = '$builddir/pkg/nestegg/libnestegg.a'
+objs[#objs + 1] = '$builddir/pkg/libjxl/libjxl.a'
+objs[#objs + 1] = '$builddir/pkg/libjxl/libhwy.a'
+objs[#objs + 1] = '$builddir/pkg/libyuv/liblibyuv.a'
+objs[#objs + 1] = '$builddir/pkg/uxp/fdlibm/libfdlibm.a'
+objs[#objs + 1] = '$builddir/pkg/uxp/qcms/libqcms.a'
+objs[#objs + 1] = '$builddir/pkg/uxp/angle/libangle.a'
+objs[#objs + 1] = '$builddir/pkg/uxp/libmkv/libmkv.a'
+objs[#objs + 1] = '$builddir/pkg/uxp/psshparser/libpsshparser.a'
+objs[#objs + 1] = '$builddir/pkg/uxp/libstagefright/libstagefright.a'
+ar('libpalemoon.a', objs)
+
+fetch 'git'
