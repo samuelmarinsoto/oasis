@@ -525,6 +525,6 @@
 	shallow = true
 [submodule "pkg/uxp/src"]
 	path = pkg/uxp/src
-	url = https://repo.palemoon.org/MoonchildProductions/UXP
+	url = https://github.com/samuelmarinsoto/uxp.git
 	ignore = all
 	shallow = true
