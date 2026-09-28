@@ -1,0 +1,13 @@
+gdkapplaunchcontext-wayland.c
+gdkcursor-wayland.c
+gdkdevice-wayland.c
+gdkdisplay-wayland.c
+gdkdnd-wayland.c
+gdkeventsource.c
+gdkglcontext-wayland.c
+gdkkeys-wayland.c
+gdkmonitor-wayland.c
+gdkscreen-wayland.c
+gdkselection-wayland.c
+gdkwindow-wayland.c
+wm-button-layout-translation.c

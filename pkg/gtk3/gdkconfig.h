@@ -1,0 +1,13 @@
+#ifndef __GDK_CONFIG_H__
+#define __GDK_CONFIG_H__
+#ifdef G_PLATFORM_WIN32
+# define GDK_WINDOWING_WIN32
+#endif
+#ifdef GDK_WINDOWING_WAYLAND
+# define GDK_NATIVE_WINDOW_POINTER
+#endif
+#define GDK_WINDOWING_WAYLAND
+#define GDK_HAVE_WCHAR_H 1
+#define GDK_HAVE_WCTYPE_H 1
+#define GDK_HAVE_ISPRINT 1
+#endif
