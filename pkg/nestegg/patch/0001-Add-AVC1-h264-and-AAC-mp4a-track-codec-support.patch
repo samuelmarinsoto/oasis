@@ -1,0 +1,80 @@
+From 6ad53b22a72a52a553b288636396bd84416c6a71 Mon Sep 17 00:00:00 2001
+Subject: [PATCH] Add AVC1 (h264) and AAC (mp4a) track codec support
+
+Matroska files carrying AVC1 ('V_MPEG4/ISO/AVC') video or AAC ('A_AAC')
+audio tracks were reported as NESTEGG_CODEC_UNKNOWN, and their codec
+private data could not be read back.  Map both codec IDs to new
+NESTEGG_CODEC_AVC1 / NESTEGG_CODEC_AAC values and accept them wherever
+Vorbis/Opus are already handled (codec data count and codec data).
+
+Carried from the UXP vendored copy (media/libnestegg), which applies
+this as mcp-avcaacsupport.patch in update.sh.
+---
+ include/nestegg/nestegg.h |  2 ++
+ src/nestegg.c             | 19 +++++++++++++++----
+ 2 files changed, 17 insertions(+), 4 deletions(-)
+
+diff --git a/include/nestegg/nestegg.h b/include/nestegg/nestegg.h
+index dc035e9..ede90fd 100644
+--- a/include/nestegg/nestegg.h
++++ b/include/nestegg/nestegg.h
+@@ -72,6 +72,8 @@ extern "C" {
+ #define NESTEGG_CODEC_VP9     2       /**< Track uses Google On2 VP9 codec. */
+ #define NESTEGG_CODEC_OPUS    3       /**< Track uses Xiph Opus codec. */
+ #define NESTEGG_CODEC_AV1     4       /**< Track uses AOMedia AV1 codec. */
++#define NESTEGG_CODEC_AVC1    5       /**< Track uses AVC1 'h264' codec. */
++#define NESTEGG_CODEC_AAC     6       /**< Track uses AAC 'mp4a' codec. */
+ #define NESTEGG_CODEC_UNKNOWN INT_MAX /**< Track uses unknown codec. */
+ 
+ #define NESTEGG_VIDEO_MONO              0 /**< Track is mono video. */
+diff --git a/src/nestegg.c b/src/nestegg.c
+index ba67df6..ae7c73d 100644
+--- a/src/nestegg.c
++++ b/src/nestegg.c
+@@ -177,6 +177,8 @@ enum ebml_type_enum {
+ #define TRACK_ID_AV1                "V_AV1"
+ #define TRACK_ID_VORBIS             "A_VORBIS"
+ #define TRACK_ID_OPUS               "A_OPUS"
++#define TRACK_ID_AVC1               "V_MPEG4/ISO/AVC"
++#define TRACK_ID_AAC                "A_AAC"
+ 
+ /* Track Encryption */
+ #define CONTENT_ENC_ALGO_AES        5
+@@ -2482,6 +2484,12 @@ nestegg_track_codec_id(nestegg * ctx, unsigned int track)
+   if (strcmp(codec_id, TRACK_ID_OPUS) == 0)
+     return NESTEGG_CODEC_OPUS;
+ 
++  if (strcmp(codec_id, TRACK_ID_AVC1) == 0)
++    return NESTEGG_CODEC_AVC1;
++
++  if (strcmp(codec_id, TRACK_ID_AAC) == 0)
++    return NESTEGG_CODEC_AAC;
++
+   return NESTEGG_CODEC_UNKNOWN;
+ }
+ 
+@@ -2502,7 +2510,8 @@ nestegg_track_codec_data_count(nestegg * ctx, unsigned int track,
+ 
+   codec_id = nestegg_track_codec_id(ctx, track);
+ 
+-  if (codec_id == NESTEGG_CODEC_OPUS) {
++  if (codec_id == NESTEGG_CODEC_OPUS ||
++      codec_id == NESTEGG_CODEC_AAC) {
+     *count = 1;
+     return 0;
+   }
+@@ -2540,7 +2549,9 @@ nestegg_track_codec_data(nestegg * ctx, unsigned int track, unsigned int item,
+     return -1;
+ 
+   if (nestegg_track_codec_id(ctx, track) != NESTEGG_CODEC_VORBIS &&
+-      nestegg_track_codec_id(ctx, track) != NESTEGG_CODEC_OPUS)
++      nestegg_track_codec_id(ctx, track) != NESTEGG_CODEC_OPUS &&
++      nestegg_track_codec_id(ctx, track) != NESTEGG_CODEC_AVC1 &&
++      nestegg_track_codec_id(ctx, track) != NESTEGG_CODEC_AAC)
+     return -1;
+ 
+   if (ne_get_binary(entry->codec_private, &codec_private) != 0)
+-- 
+2.51.0
+
+
