@@ -1,0 +1,20 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+Subject: [PATCH] Write the null dereference before abort() in cubeb_crash
+
+Carried from the vendored copy in UXP: perform the volatile null
+write before abort() so crash reports attribute the fault to the
+explicit dereference instead of the raise(). No functional change
+for the oasis build; keeps the tree identical to UXP.
+---
+diff --git a/src/cubeb.c b/src/cubeb.c
+--- a/src/cubeb.c
++++ b/src/cubeb.c
+@@ -568,7 +568,7 @@
+ void
+ cubeb_crash()
+ {
+-  abort();
+   *((volatile int *) NULL) = 0;
++  abort();
+ }
+ 

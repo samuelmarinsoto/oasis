@@ -1,0 +1,31 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+Subject: [PATCH] Register the sun audio backend
+
+Mozilla-central added a NetBSD/SunOS backend (cubeb_sun.c) plus its
+registration in cubeb.c, gated on USE_SUN. Carried from the vendored
+copy in UXP so the tree matches the browser build inputs. The backend
+itself stays excluded from the oasis ALSA-only build (R3).
+---
+diff --git a/src/cubeb.c b/src/cubeb.c
+--- a/src/cubeb.c
++++ b/src/cubeb.c
+@@ -54,6 +54,9 @@
+ #if defined(USE_KAI)
+ int kai_init(cubeb ** context, char const * context_name);
+ #endif
++#if defined(USE_SUN)
++int sunaudio_init(cubeb ** context, char const * context_name);
++#endif
+ 
+ 
+ static int
+@@ -141,6 +144,9 @@
+ #if defined(USE_KAI)
+     kai_init,
+ #endif
++#if defined(USE_SUN)
++    sunaudio_init,
++#endif
+   };
+   int i;
+ 

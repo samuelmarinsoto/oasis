@@ -1,0 +1,26 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+Subject: [PATCH] ALSA: report CUBEB_STATE_ERROR when recovery write fails
+
+Carried from the vendored copy in UXP: cubeb_alsa stream recovery
+previously asserted that the recovery snd_pcm_writei succeeded. An
+assertion abort is not recoverable in release builds; instead unlock
+the stream, notify the state callback with CUBEB_STATE_ERROR and
+return an error.
+---
+diff --git a/src/cubeb_alsa.c b/src/cubeb_alsa.c
+--- a/src/cubeb_alsa.c
++++ b/src/cubeb_alsa.c
+@@ -317,7 +317,12 @@
+       snd_pcm_recover(stm->pcm, wrote, 1);
+       wrote = snd_pcm_writei(stm->pcm, p, got);
+     }
+-    assert(wrote >= 0 && wrote == got);
++    if (wrote < 0 || wrote != got) {
++      /* Recovery failed, somehow. */
++      pthread_mutex_unlock(&stm->mutex);
++      stm->state_callback(stm, stm->user_ptr, CUBEB_STATE_ERROR);
++      return ERROR;
++    }
+     stm->write_position += wrote;
+     gettimeofday(&stm->last_activity, NULL);
+   }
