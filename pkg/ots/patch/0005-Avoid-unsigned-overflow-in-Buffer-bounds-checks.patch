@@ -1,0 +1,75 @@
+From bb632a44922aabf3d6d86ea75b937003c446b5e4 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Samuel=20Mar=C3=ADn=20Soto?= <samarin@estudiantec.cr>
+Date: Sat, 26 Sep 2026 12:05:00 -0600
+Subject: [PATCH] Avoid unsigned overflow in Buffer bounds checks
+
+Test the length against the byte count before the offset, so the
+checks never evaluate offset_ + n_bytes, which can wrap for large
+offsets. Same shape as the checks in mozilla-central's copy of ots;
+upstream carries the overflow-prone form through v9.0.0.
+---
+ src/ots.h | 13 ++++++-------
+ 1 file changed, 6 insertions(+), 7 deletions(-)
+
+diff --git a/src/ots.h b/src/ots.h
+index 4d2be16..26f3d85 100644
+--- a/src/ots.h
++++ b/src/ots.h
+@@ -87,8 +87,7 @@ class Buffer {
+     if (n_bytes > 1024 * 1024 * 1024) {
+       return OTS_FAILURE();
+     }
+-    if ((offset_ + n_bytes > length_) ||
+-        (offset_ > length_ - n_bytes)) {
++    if (length_ < n_bytes || offset_ > length_ - n_bytes) {
+       return OTS_FAILURE();
+     }
+     if (buf) {
+@@ -99,7 +98,7 @@ class Buffer {
+   }
+ 
+   inline bool ReadU8(uint8_t *value) {
+-    if (offset_ + 1 > length_) {
++    if (length_ < 1 || offset_ > length_ - 1) {
+       return OTS_FAILURE();
+     }
+     *value = buffer_[offset_];
+@@ -108,7 +107,7 @@ class Buffer {
+   }
+ 
+   bool ReadU16(uint16_t *value) {
+-    if (offset_ + 2 > length_) {
++    if (length_ < 2 || offset_ > length_ - 2) {
+       return OTS_FAILURE();
+     }
+     std::memcpy(value, buffer_ + offset_, sizeof(uint16_t));
+@@ -122,7 +121,7 @@ class Buffer {
+   }
+ 
+   bool ReadU24(uint32_t *value) {
+-    if (offset_ + 3 > length_) {
++    if (length_ < 3 || offset_ > length_ - 3) {
+       return OTS_FAILURE();
+     }
+     *value = static_cast<uint32_t>(buffer_[offset_]) << 16 |
+@@ -133,7 +132,7 @@ class Buffer {
+   }
+ 
+   bool ReadU32(uint32_t *value) {
+-    if (offset_ + 4 > length_) {
++    if (length_ < 4 || offset_ > length_ - 4) {
+       return OTS_FAILURE();
+     }
+     std::memcpy(value, buffer_ + offset_, sizeof(uint32_t));
+@@ -147,7 +146,7 @@ class Buffer {
+   }
+ 
+   bool ReadR64(uint64_t *value) {
+-    if (offset_ + 8 > length_) {
++    if (length_ < 8 || offset_ > length_ - 8) {
+       return OTS_FAILURE();
+     }
+     std::memcpy(value, buffer_ + offset_, sizeof(uint64_t));
+-- 
+2.55.0
+

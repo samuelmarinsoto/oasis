@@ -1,0 +1,28 @@
+From 2663a4a6a2d23ee8c1144f519c94edafb42f0d3c Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Samuel=20Mar=C3=ADn=20Soto?= <samarin@estudiantec.cr>
+Date: Sat, 26 Sep 2026 12:06:00 -0600
+Subject: [PATCH] Pass Table::Message text as a format argument
+
+msg is built with vsnprintf and may contain percent signs from font
+data; forward it as an argument to the printf-style Message callback
+instead of using it as the format string.
+---
+ src/ots.cc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/ots.cc b/src/ots.cc
+index 38d97a9..a74bbf2 100644
+--- a/src/ots.cc
++++ b/src/ots.cc
+@@ -1004,7 +1004,7 @@ bool Table::ShouldSerialize() {
+ void Table::Message(int level, const char *format, va_list va) {
+   char msg[206] = { OTS_UNTAG(m_tag), ':', ' ' };
+   std::vsnprintf(msg + 6, 200, format, va);
+-  m_font->file->context->Message(level, msg);
++  m_font->file->context->Message(level, "%s", msg);
+ }
+ 
+ bool Table::Error(const char *format, ...) {
+-- 
+2.55.0
+

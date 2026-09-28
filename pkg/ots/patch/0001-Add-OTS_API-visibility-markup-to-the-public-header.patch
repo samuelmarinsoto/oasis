@@ -1,0 +1,57 @@
+From 5cb161e9d9806db54d9b549996bc182d22810da7 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Samuel=20Mar=C3=ADn=20Soto?= <samarin@estudiantec.cr>
+Date: Sat, 26 Sep 2026 12:01:00 -0600
+Subject: [PATCH] Add OTS_API visibility markup to the public header
+
+Carries UXP's ots-visibility.patch (mozilla bug 711079) unchanged:
+defines OTS_DLL_IMPORT/OTS_DLL_EXPORT and marks OTSContext with
+OTS_API. For static linkage OTS_API expands to nothing, so this has no
+effect on our build; it is kept so the installed header stays
+byte-identical to the copy UXP's thebes compiles against.
+---
+ include/opentype-sanitiser.h | 22 +++++++++++++++++++++-
+ 1 file changed, 21 insertions(+), 1 deletion(-)
+
+diff --git a/include/opentype-sanitiser.h b/include/opentype-sanitiser.h
+index 08f23be..52cbd3a 100644
+--- a/include/opentype-sanitiser.h
++++ b/include/opentype-sanitiser.h
+@@ -5,6 +5,26 @@
+ #ifndef OPENTYPE_SANITISER_H_
+ #define OPENTYPE_SANITISER_H_
+ 
++#if defined(_WIN32) || defined(__CYGWIN__)
++  #define OTS_DLL_IMPORT __declspec(dllimport)
++  #define OTS_DLL_EXPORT __declspec(dllexport)
++#else
++  #if __GNUC__ >= 4
++    #define OTS_DLL_IMPORT __attribute__((visibility ("default")))
++    #define OTS_DLL_EXPORT __attribute__((visibility ("default")))
++  #endif
++#endif
++
++#ifdef OTS_DLL
++  #ifdef OTS_DLL_EXPORTS
++    #define OTS_API OTS_DLL_EXPORT
++  #else
++    #define OTS_API OTS_DLL_IMPORT
++  #endif
++#else
++  #define OTS_API
++#endif
++
+ #if defined(_WIN32)
+ #include <stdlib.h>
+ typedef signed char int8_t;
+@@ -165,7 +185,7 @@ enum TableAction {
+   TABLE_ACTION_DROP      // Drop the table
+ };
+ 
+-class OTSContext {
++class OTS_API OTSContext {
+   public:
+     OTSContext() {}
+     virtual ~OTSContext() {}
+-- 
+2.55.0
+

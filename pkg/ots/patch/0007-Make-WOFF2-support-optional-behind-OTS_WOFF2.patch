@@ -1,0 +1,60 @@
+From f2ef9884719bd9e398f41b8e63b20a68eb7db614 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Samuel=20Mar=C3=ADn=20Soto?= <samarin@estudiantec.cr>
+Date: Sat, 26 Sep 2026 12:07:00 -0600
+Subject: [PATCH] Make WOFF2 support optional behind OTS_WOFF2
+
+Upstream builds WOFF2 support unconditionally against the
+third_party/woff2 and third_party/brotli submodules, which are not
+part of the release tarball. Gate the decoder behind OTS_WOFF2 so the
+library also builds without them; WOFF2 fonts are then rejected
+cleanly through the normal error path. When pkg/brotli and pkg/woff2
+land, build with -D OTS_WOFF2 and add their headers to pkg.deps.
+---
+ src/ots.cc | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/src/ots.cc b/src/ots.cc
+index a74bbf2..5381f66 100644
+--- a/src/ots.cc
++++ b/src/ots.cc
+@@ -14,7 +14,9 @@
+ #include <map>
+ #include <vector>
+ 
++#ifdef OTS_WOFF2
+ #include <woff2/decode.h>
++#endif
+ 
+ // The OpenType Font File
+ // http://www.microsoft.com/typography/otspec/otff.htm
+@@ -497,6 +499,7 @@ bool ProcessWOFF(ots::FontFile *header,
+   return ProcessGeneric(header, font, woff_tag, output, data, length, tables, file);
+ }
+ 
++#ifdef OTS_WOFF2
+ bool ProcessWOFF2(ots::FontFile *header,
+                   ots::OTSStream *output,
+                   const uint8_t *data,
+@@ -530,6 +533,7 @@ bool ProcessWOFF2(ots::FontFile *header,
+     return ProcessTTF(header, &font, output, decompressed, out.Size());
+   }
+ }
++#endif  // OTS_WOFF2
+ 
+ ots::TableAction GetTableAction(const ots::FontFile *header, uint32_t tag) {
+   ots::TableAction action = header->context->GetTableAction(tag);
+@@ -1096,7 +1100,11 @@ bool OTSContext::Process(OTSStream *output,
+   if (data[0] == 'w' && data[1] == 'O' && data[2] == 'F' && data[3] == 'F') {
+     result = ProcessWOFF(&header, &font, output, data, length);
+   } else if (data[0] == 'w' && data[1] == 'O' && data[2] == 'F' && data[3] == '2') {
++#ifdef OTS_WOFF2
+     result = ProcessWOFF2(&header, output, data, length, index);
++#else
++    result = OTS_FAILURE_MSG_(&header, "WOFF2 support is not compiled in");
++#endif
+   } else if (data[0] == 't' && data[1] == 't' && data[2] == 'c' && data[3] == 'f') {
+     result = ProcessTTC(&header, output, data, length, index);
+   } else {
+-- 
+2.55.0
+

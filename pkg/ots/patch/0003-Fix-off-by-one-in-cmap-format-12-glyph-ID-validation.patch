@@ -1,0 +1,31 @@
+From 5e56240d2822253554745a7faec6c24273b87949 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Samuel=20Mar=C3=ADn=20Soto?= <samarin@estudiantec.cr>
+Date: Sat, 26 Sep 2026 12:03:00 -0600
+Subject: [PATCH] Fix off-by-one in cmap format 12 glyph ID validation
+
+The maximum glyph ID must be strictly less than num_glyphs; the old
+comparison let an ID equal to num_glyphs through. Matches upstream
+commit 835ac274 ("[cmap] Fix off-by-one in format 12 glyph ID
+validation") as carried in UXP's vendored snapshot.
+---
+ src/cmap.cc | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/src/cmap.cc b/src/cmap.cc
+index 72c2a20..9cfd003 100644
+--- a/src/cmap.cc
++++ b/src/cmap.cc
+@@ -314,8 +314,9 @@ bool OpenTypeCMAP::Parse31012(const uint8_t *data, size_t length,
+       return Error("format 12 subtable group endCharCode before startCharCode (0x%4X < 0x%4X)",
+                              groups[i].end_range, groups[i].start_range);
+     }
++    // Maximum glyph ID must be less than num_glyphs.
+     if ((groups[i].end_range - groups[i].start_range) +
+-        groups[i].start_glyph_id > num_glyphs) {
++        groups[i].start_glyph_id >= num_glyphs) {
+       return Error("bad format 12 subtable group startGlyphID (%d)", groups[i].start_glyph_id);
+     }
+   }
+-- 
+2.55.0
+
