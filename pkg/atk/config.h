@@ -1,0 +1,9 @@
+#define ENABLE_NLS 0
+#define GETTEXT_PACKAGE "atk20"
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_UNISTD_H 1
+#define HAVE_STDINT_H 1
+#define ATK_LOCALEDIR "/usr/share/locale"
+#define ATK_COMPILATION 1
+#define VERSION "2.36.0"
+#define ATK_DISABLE_DEPRECATION_WARNINGS 1
