@@ -58,6 +58,46 @@ waylandproto('staging/single-pixel-buffer/single-pixel-buffer-v1.xml', {
 	code='single-pixel-buffer-v1-protocol.c',
 })
 
+waylandproto('unstable/pointer-gestures/pointer-gestures-unstable-v1.xml', {
+	client='include/pointer-gestures-unstable-v1-client-protocol.h',
+	code='pointer-gestures-unstable-v1-protocol.c',
+})
+
+waylandproto('unstable/xdg-shell/xdg-shell-unstable-v6.xml', {
+	client='include/xdg-shell-unstable-v6-client-protocol.h',
+	code='xdg-shell-unstable-v6-protocol.c',
+})
+
+waylandproto('unstable/xdg-foreign/xdg-foreign-unstable-v1.xml', {
+	client='include/xdg-foreign-unstable-v1-client-protocol.h',
+	code='xdg-foreign-unstable-v1-protocol.c',
+})
+
+waylandproto('unstable/tablet/tablet-unstable-v2.xml', {
+	client='include/tablet-unstable-v2-client-protocol.h',
+	code='tablet-unstable-v2-protocol.c',
+})
+
+waylandproto('unstable/keyboard-shortcuts-inhibit/keyboard-shortcuts-inhibit-unstable-v1.xml', {
+	client='include/keyboard-shortcuts-inhibit-unstable-v1-client-protocol.h',
+	code='keyboard-shortcuts-inhibit-unstable-v1-protocol.c',
+})
+
+waylandproto('unstable/xdg-output/xdg-output-unstable-v1.xml', {
+	client='include/xdg-output-unstable-v1-client-protocol.h',
+	code='xdg-output-unstable-v1-protocol.c',
+})
+
+waylandproto('unstable/primary-selection/primary-selection-unstable-v1.xml', {
+	client='include/primary-selection-unstable-v1-client-protocol.h',
+	code='primary-selection-unstable-v1-protocol.c',
+})
+
+waylandproto('staging/xdg-activation/xdg-activation-v1.xml', {
+	client='include/xdg-activation-v1-client-protocol.h',
+	code='xdg-activation-v1-protocol.c',
+})
+
 pkg.hdrs = {
 	'$outdir/include/presentation-time-client-protocol.h',
 	'$outdir/include/xdg-shell-client-protocol.h',
@@ -70,6 +110,14 @@ pkg.hdrs = {
 	'$outdir/include/xdg-decoration-unstable-v1-server-protocol.h',
 	'$outdir/include/text-input-unstable-v3-client-protocol.h',
 	'$outdir/include/text-input-unstable-v3-server-protocol.h',
+	'$outdir/include/pointer-gestures-unstable-v1-client-protocol.h',
+	'$outdir/include/xdg-shell-unstable-v6-client-protocol.h',
+	'$outdir/include/xdg-foreign-unstable-v1-client-protocol.h',
+	'$outdir/include/tablet-unstable-v2-client-protocol.h',
+	'$outdir/include/keyboard-shortcuts-inhibit-unstable-v1-client-protocol.h',
+	'$outdir/include/xdg-output-unstable-v1-client-protocol.h',
+	'$outdir/include/primary-selection-unstable-v1-client-protocol.h',
+	'$outdir/include/xdg-activation-v1-client-protocol.h',
 }
 
 fetch 'git'
