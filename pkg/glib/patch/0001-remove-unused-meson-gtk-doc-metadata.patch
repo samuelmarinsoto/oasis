@@ -1,0 +1,125 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: oasis <oasis@localhost>
+Date: Sat, 26 Sep 2026 01:01:57 -0600
+Subject: [PATCH] glib: remove unused meson/gtk-doc metadata
+
+The oasis build never runs meson or gtk-doc, so these build metadata
+files are dead weight; drop them so a fresh fetch reproduces the
+de-vendored tree exactly.
+---
+diff --git a/docs/reference/gio/xml/gtkdocentities.ent.in b/docs/reference/gio/xml/gtkdocentities.ent.in
+deleted file mode 100644
+index f12c9ff..0000000
+--- a/docs/reference/gio/xml/gtkdocentities.ent.in
++++ /dev/null
+@@ -1,8 +0,0 @@
+-<!ENTITY package "@PACKAGE@">
+-<!ENTITY package_bugreport "@PACKAGE_BUGREPORT@">
+-<!ENTITY package_name "@PACKAGE_NAME@">
+-<!ENTITY package_string "@PACKAGE_STRING@">
+-<!ENTITY package_tarname "@PACKAGE_TARNAME@">
+-<!ENTITY package_url "@PACKAGE_URL@">
+-<!ENTITY package_version "@PACKAGE_VERSION@">
+-<!ENTITY package_api_version "@PACKAGE_API_VERSION@">
+diff --git a/docs/reference/gio/xml/meson.build b/docs/reference/gio/xml/meson.build
+deleted file mode 100644
+index 6aeb745..0000000
+--- a/docs/reference/gio/xml/meson.build
++++ /dev/null
+@@ -1,14 +0,0 @@
+-ent_conf = configuration_data()
+-ent_conf.set('PACKAGE', 'glib')
+-ent_conf.set('PACKAGE_BUGREPORT', 'https://gitlab.gnome.org/GNOME/glib/issues/new')
+-ent_conf.set('PACKAGE_NAME', 'glib')
+-ent_conf.set('PACKAGE_STRING', 'glib')
+-ent_conf.set('PACKAGE_TARNAME', 'glib')
+-ent_conf.set('PACKAGE_URL', 'FIXME')
+-ent_conf.set('PACKAGE_VERSION', glib_version)
+-ent_conf.set('PACKAGE_API_VERSION', glib_api_version)
+-configure_file(
+-  input: 'gtkdocentities.ent.in',
+-  output: 'gtkdocentities.ent',
+-  configuration: ent_conf
+-)
+diff --git a/docs/reference/glib/xml/gtkdocentities.ent.in b/docs/reference/glib/xml/gtkdocentities.ent.in
+deleted file mode 100644
+index f12c9ff..0000000
+--- a/docs/reference/glib/xml/gtkdocentities.ent.in
++++ /dev/null
+@@ -1,8 +0,0 @@
+-<!ENTITY package "@PACKAGE@">
+-<!ENTITY package_bugreport "@PACKAGE_BUGREPORT@">
+-<!ENTITY package_name "@PACKAGE_NAME@">
+-<!ENTITY package_string "@PACKAGE_STRING@">
+-<!ENTITY package_tarname "@PACKAGE_TARNAME@">
+-<!ENTITY package_url "@PACKAGE_URL@">
+-<!ENTITY package_version "@PACKAGE_VERSION@">
+-<!ENTITY package_api_version "@PACKAGE_API_VERSION@">
+diff --git a/docs/reference/glib/xml/meson.build b/docs/reference/glib/xml/meson.build
+deleted file mode 100644
+index 6aeb745..0000000
+--- a/docs/reference/glib/xml/meson.build
++++ /dev/null
+@@ -1,14 +0,0 @@
+-ent_conf = configuration_data()
+-ent_conf.set('PACKAGE', 'glib')
+-ent_conf.set('PACKAGE_BUGREPORT', 'https://gitlab.gnome.org/GNOME/glib/issues/new')
+-ent_conf.set('PACKAGE_NAME', 'glib')
+-ent_conf.set('PACKAGE_STRING', 'glib')
+-ent_conf.set('PACKAGE_TARNAME', 'glib')
+-ent_conf.set('PACKAGE_URL', 'FIXME')
+-ent_conf.set('PACKAGE_VERSION', glib_version)
+-ent_conf.set('PACKAGE_API_VERSION', glib_api_version)
+-configure_file(
+-  input: 'gtkdocentities.ent.in',
+-  output: 'gtkdocentities.ent',
+-  configuration: ent_conf
+-)
+diff --git a/docs/reference/gobject/xml/gtkdocentities.ent.in b/docs/reference/gobject/xml/gtkdocentities.ent.in
+deleted file mode 100644
+index f12c9ff..0000000
+--- a/docs/reference/gobject/xml/gtkdocentities.ent.in
++++ /dev/null
+@@ -1,8 +0,0 @@
+-<!ENTITY package "@PACKAGE@">
+-<!ENTITY package_bugreport "@PACKAGE_BUGREPORT@">
+-<!ENTITY package_name "@PACKAGE_NAME@">
+-<!ENTITY package_string "@PACKAGE_STRING@">
+-<!ENTITY package_tarname "@PACKAGE_TARNAME@">
+-<!ENTITY package_url "@PACKAGE_URL@">
+-<!ENTITY package_version "@PACKAGE_VERSION@">
+-<!ENTITY package_api_version "@PACKAGE_API_VERSION@">
+diff --git a/docs/reference/gobject/xml/meson.build b/docs/reference/gobject/xml/meson.build
+deleted file mode 100644
+index 6aeb745..0000000
+--- a/docs/reference/gobject/xml/meson.build
++++ /dev/null
+@@ -1,14 +0,0 @@
+-ent_conf = configuration_data()
+-ent_conf.set('PACKAGE', 'glib')
+-ent_conf.set('PACKAGE_BUGREPORT', 'https://gitlab.gnome.org/GNOME/glib/issues/new')
+-ent_conf.set('PACKAGE_NAME', 'glib')
+-ent_conf.set('PACKAGE_STRING', 'glib')
+-ent_conf.set('PACKAGE_TARNAME', 'glib')
+-ent_conf.set('PACKAGE_URL', 'FIXME')
+-ent_conf.set('PACKAGE_VERSION', glib_version)
+-ent_conf.set('PACKAGE_API_VERSION', glib_api_version)
+-configure_file(
+-  input: 'gtkdocentities.ent.in',
+-  output: 'gtkdocentities.ent',
+-  configuration: ent_conf
+-)
+diff --git a/gio/tests/de/LC_MESSAGES/meson.build b/gio/tests/de/LC_MESSAGES/meson.build
+deleted file mode 100644
+index 2aab3b6..0000000
+--- a/gio/tests/de/LC_MESSAGES/meson.build
++++ /dev/null
+@@ -1,8 +0,0 @@
+-# Doing this in a subdir, so we get it in the right build de/LC_MESSAGES subdir
+-# at least in cases where the build directory layout is mirrored.
+-test_mo =  custom_target('test.mo',
+-    input :   ['../../de.po'],
+-    output :  ['test.mo'],
+-    command : [msgfmt, '-o', '@OUTPUT@', '@INPUT@'])
+-
+-test_mo_dir = meson.current_build_dir()
