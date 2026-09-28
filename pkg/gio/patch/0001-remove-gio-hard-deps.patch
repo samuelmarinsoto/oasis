@@ -1,0 +1,30 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: oasis <oasis@localhost>
+Date: Sat, 26 Sep 2026 01:01:57 -0600
+Subject: [PATCH] gio: drop trash portal call path
+
+Oasis has no portals (R3: no dbus); remove the only users of
+gtrashportal.h so the portal trash code drops out of the static link.
+---
+diff --git a/gio/glocalfile.c b/gio/glocalfile.c
+index a87de9c..2bec5c9 100644
+--- a/gio/glocalfile.c
++++ b/gio/glocalfile.c
+@@ -66,7 +66,6 @@
+ #ifdef G_OS_UNIX
+ #include "glib-unix.h"
+ #include "gportalsupport.h"
+-#include "gtrashportal.h"
+ #endif
+ 
+ #include "glib-private.h"
+@@ -1958,9 +1957,6 @@ g_local_file_trash (GFile         *file,
+   GVfs *vfs;
+   int errsv;
+ 
+-  if (glib_should_use_portal ())
+-    return g_trash_portal_trash_file (file, error);
+-
+   if (g_lstat (local->filename, &file_stat) != 0)
+     {
+       errsv = errno;

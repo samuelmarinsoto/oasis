@@ -1,0 +1,8 @@
+xdgmime.c
+xdgmimealias.c
+xdgmimecache.c
+xdgmimeglob.c
+xdgmimeicon.c
+xdgmimeint.c
+xdgmimemagic.c
+xdgmimeparent.c

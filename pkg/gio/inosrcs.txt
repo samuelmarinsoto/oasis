@@ -1,0 +1,6 @@
+ginotifyfilemonitor.c
+inotify-helper.c
+inotify-kernel.c
+inotify-missing.c
+inotify-path.c
+inotify-sub.c
