@@ -31,6 +31,7 @@ pkg.hdrs = {
 		'wayland-util.h',
 	}),
 	copy('$outdir/include', '$srcdir/cursor', {'wayland-cursor.h'}),
+	copy('$outdir/include', '$srcdir/egl', {'wayland-egl.h', 'wayland-egl-core.h', 'wayland-egl-backend.h'}),
 	'$outdir/include/wayland-client-protocol.h',
 	'$outdir/include/wayland-server-protocol.h',
 	'$outdir/include/wayland-version.h',
@@ -86,5 +87,7 @@ lib('libwayland-cursor.a', [[
 	)
 	libwayland-client.a.d
 ]])
+
+lib('libwayland-egl.a', 'egl/wayland-egl.c')
 
 fetch 'git'
