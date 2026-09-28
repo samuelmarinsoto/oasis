@@ -1,0 +1,8 @@
+#ifndef __GDK_PIXBUF_FEATURES_H__
+#define __GDK_PIXBUF_FEATURES_H__
+#define GDK_PIXBUF_MAJOR 2
+#define GDK_PIXBUF_MINOR 42
+#define GDK_PIXBUF_MICRO 10
+#define GDK_PIXBUF_VERSION "2.42.10"
+#define _GDK_PIXBUF_EXTERN extern
+#endif
