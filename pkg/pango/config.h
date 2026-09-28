@@ -1,0 +1,14 @@
+#define HAVE_CONFIG_H 1
+#define HAVE_HARFBUZZ 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_UNISTD_H 1
+#define HAVE_DIRENT_H 1
+#define HAVE_GETC_UNLOCKED 1
+#define HAVE_FLOCKFILE 1
+#define HAVE_STRDUP 1
+#define HAVE_SYS_WAIT_H 1
+#define HAVE_SYS_RESOURCE_H 1
+#define HAVE_DLFCN_H 0
+#define SYSCONFDIR "/etc"
+#define LIBDIR "/usr/lib"
+#define DATADIR "/usr/share"
