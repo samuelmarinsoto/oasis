@@ -9,7 +9,6 @@ cflags{
 	'-D U_I18N_IMPLEMENTATION=1',
 	'-D U_ENABLE_DYLOAD=0',
 	'-D U_CHECK_DYLOAD=0',
-	'-D U_DISABLE_RENAMING=1',
 	'-D U_NO_DEFAULT_INCLUDE_UTF_HEADERS=1',
 	'-I $dir',
 	'-I $srcdir/common',

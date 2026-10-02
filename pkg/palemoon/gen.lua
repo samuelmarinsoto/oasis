@@ -50,7 +50,7 @@ cflags{
 	'-isystem $builddir/pkg/nss/include',
 	'-isystem $builddir/pkg/nss/include/nss',
 	'-isystem $builddir/pkg/nss/include/ssl',
-	'-isystem /pkg/nss/include/smime',
+	'-isystem $builddir/pkg/nss/include/smime',
 	-- speex: the consumer header renames the symbols to moz_speex_*
 	'-isystem $builddir/pkg/icu/src/common',
 	'-isystem $builddir/pkg/icu/src/i18n',

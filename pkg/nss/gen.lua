@@ -6,6 +6,8 @@ cflags{
 	'-D _REENTRANT',
 	'-D NSS_USE_64',
 	'-D USE_UTIL_DIRECTLY',
+	-- the exported mozpkix/ copies: mozpkix sources include <mozpkix/*.h>
+	'-I $outdir/include',
 	'-D NSS_DISABLE_DBM',
 	'-include $dir/nssconf.h',
 	'-I $srcdir/lib/libpkix/include',
@@ -44,6 +46,8 @@ cflags{
 	'-I $srcdir/lib/ckfw',
 	'-I $srcdir/lib/ckfw/builtins',
 	'-I $srcdir/lib/mozpkix/include',
+	-- mozpkix sources include "mozpkix/nss_scoped_ptrs.h" (cpputil)
+	'-I $srcdir/cpputil',
 	'-I $srcdir/lib/smime',
 	'-I $srcdir/lib/softoken',
 	'-I $srcdir/lib/crmf',
@@ -154,6 +158,8 @@ pkg.hdrs = {
 	copy('$outdir/include/nss', '$srcdir/lib/pkcs12', {'pkcs12.h', 'pkcs12t.h', 'p12.h', 'p12t.h'}),
 	-- PSM's nsPKCS12Blob.h includes the private p12plcy.h
 	copy('$outdir/include/nss', '$srcdir/lib/pkcs12', {'p12plcy.h'}),
+	-- mozpkix sources include "mozpkix/nss_scoped_ptrs.h" (cpputil)
+	copy('$outdir/include/mozpkix', '$srcdir/cpputil', {'nss_scoped_ptrs.h'}),
 	copy('$outdir/include/smime', '$srcdir/lib/smime', {
 		'cms.h',
 		'cmst.h',
@@ -418,7 +424,7 @@ coreconf/empty.c
 	nssobjs[#nssobjs + 1] = '$outdir/lib/ckfw/builtins/certdata.c.o'
 end
 ar('libnss.a', nssobjs)
-ar('libmozpkix.a', objects([[lib/mozpkix/lib/pkix/(
+ar('libmozpkix.a', objects([[lib/mozpkix/lib/(
 		pkixbuild.cpp
 		pkixc.cpp
 		pkixcert.cpp
@@ -430,7 +436,7 @@ ar('libmozpkix.a', objects([[lib/mozpkix/lib/pkix/(
 		pkixresult.cpp
 		pkixtime.cpp
 		pkixverify.cpp
-)]], {'$gendir/headers', 'pkg/nspr/headers'}))
+)]], {'$gendir/headers', 'pkg/nspr/headers', '$outdir/include/mozpkix/nss_scoped_ptrs.h'}))
 ar('libnssutil.a', objects([=[
 lib/util/(
 		quickder.c
