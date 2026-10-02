@@ -24,6 +24,7 @@ pkg.hdrs = copy('$outdir/include', '$srcdir/include', paths[[
 		ftfntfmt.h
 		ftglyph.h
 		ftimage.h
+		ftlcdfil.h
 		ftmm.h
 		ftmodapi.h
 		ftmoderr.h

@@ -20,6 +20,8 @@ pkg.hdrs = {
 		'util.h',
 		'visibility.h',
 	}),
+	-- <event.h> consumer: chromium message_pump_libevent
+	copy('$outdir/include', '$srcdir/include', {'event.h'}),
 	'$outdir/include/event2/event-config.h',
 }
 pkg.deps = {

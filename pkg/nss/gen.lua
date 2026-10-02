@@ -143,6 +143,12 @@ pkg.hdrs = {
 		'pkixcheck.h', 'pkixder.h', 'pkixnss.h', 'pkixtypes.h',
 		'pkixutil.h',
 	}),
+	-- gecko includes <mozpkix/pkixtypes.h> (no pkix/ level)
+	copy('$outdir/include/mozpkix', '$srcdir/lib/mozpkix/include/pkix', {
+		'Input.h', 'Result.h', 'Time.h', 'pkix.h', 'pkixc.h',
+		'pkixcheck.h', 'pkixder.h', 'pkixnss.h', 'pkixtypes.h',
+		'pkixutil.h',
+	}),
 	-- public p12 headers needed by the palemoon NSS glue
 	copy('$outdir/include/nss', '$srcdir/lib/pkcs12', {'pkcs12.h', 'pkcs12t.h', 'p12.h', 'p12t.h'}),
 	copy('$outdir/include/smime', '$srcdir/lib/smime', {
