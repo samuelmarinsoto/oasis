@@ -12,7 +12,7 @@ cflags{
 }
 
 pkg.hdrs = {
-	copy('$outdir/include', '$srcdir/src', {'cairo.h', 'cairo-deprecated.h', 'cairo-ft.h', 'cairo-pdf.h', 'cairo-ps.h', 'cairo-svg.h'}),
+	copy('$outdir/include', '$srcdir/src', {'cairo.h', 'cairo-deprecated.h', 'cairo-ft.h', 'cairo-pdf.h', 'cairo-ps.h', 'cairo-tee.h', 'cairo-svg.h'}),
 	copy('$outdir/include', '$srcdir/util/cairo-gobject', {'cairo-gobject.h'}),
 	copy('$outdir/include', '$srcdir', {'cairo-version.h'}),
 	copy('$outdir/include', '$dir', {'cairo-features.h'}),
@@ -122,6 +122,7 @@ lib('libcairo.a', [[src/(
 		cairo-surface-subsurface.c
 		cairo-surface-wrapper.c
 		cairo-surface.c
+		cairo-tee-surface.c
 		cairo-time.c
 		cairo-tor-scan-converter.c
 		cairo-tor22-scan-converter.c
