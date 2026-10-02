@@ -182,10 +182,6 @@ cflags{
 	'-I pkg/uxp/src/intl/uconv/ucvcn',
 	'-I pkg/uxp/src/intl/uconv/ucvko',
 	'-I pkg/uxp/src/intl/uconv/ucvtw',
-	-- gecko vendors a cairo fork; its headers (cairo-tee.h, the
-	-- subpixel-antialiasing enum, scaled-font hint metrics) must win
-	-- over pkg/cairo for gecko objects
-	'-I pkg/uxp/src/gfx/cairo/cairo/src',
 }
 
 -- every directory owning a compiled source (and every generated-header dir)
