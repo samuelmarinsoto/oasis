@@ -36,4 +36,4 @@ lib('libpng.a', [[
 ]])
 file('lib/libpng.a', '644', '$outdir/libpng.a')
 
-fetch 'git'
+fetch 'curl'

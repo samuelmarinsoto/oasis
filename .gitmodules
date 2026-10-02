@@ -218,11 +218,6 @@
 	path = pkg/libplacebo/src
 	url = https://code.videolan.org/videolan/libplacebo.git
 	shallow = true
-[submodule "pkg/libpng/src"]
-	path = pkg/libpng/src
-	url = https://github.com/glennrp/libpng.git
-	ignore = all
-	shallow = true
 [submodule "pkg/libtirpc/src"]
 	path = pkg/libtirpc/src
 	url = git://git.linux-nfs.org/projects/steved/libtirpc.git

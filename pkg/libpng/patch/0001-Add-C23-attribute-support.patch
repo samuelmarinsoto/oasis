@@ -3,6 +3,12 @@ From: Michael Forney <mforney@mforney.org>
 Date: Sat, 2 May 2026 20:10:48 -0700
 Subject: [PATCH] Add C23 attribute support
 
+Use C23 [[...]] attribute spellings when __STDC_VERSION__ >= 202311L,
+and move storage-class/linkage specifiers after the attribute list in
+PNG_FUNCTION users so the declarations stay valid in C23. Ported
+forward from the 1.6.43 version of this patch (context refreshed for
+1.6.58; same intent).
+
 ---
  pngconf.h  | 25 +++++++++++++++++++++++--
  pngerror.c |  8 ++++----
@@ -10,19 +16,19 @@ Subject: [PATCH] Add C23 attribute support
  3 files changed, 30 insertions(+), 9 deletions(-)
 
 diff --git a/pngconf.h b/pngconf.h
-index 000d7b1a8..16d290ccd 100644
+index 3eda9d0..ade3270 100644
 --- a/pngconf.h
 +++ b/pngconf.h
-@@ -299,7 +299,7 @@
+@@ -286,7 +286,7 @@
  #ifndef PNG_EXPORTA
  #  define PNG_EXPORTA(ordinal, type, name, args, attributes) \
-       PNG_FUNCTION(PNG_EXPORT_TYPE(type), (PNGAPI name), PNGARG(args), \
+       PNG_FUNCTION(PNG_EXPORT_TYPE(type), (PNGAPI name), args, \
 -      PNG_LINKAGE_API attributes)
 +      attributes PNG_LINKAGE_API)
  #endif
  
  /* ANSI-C (C90) does not permit a macro to be invoked with an empty argument,
-@@ -339,7 +339,28 @@
+@@ -326,7 +326,28 @@
     * version 1.2.41.  Disabling these removes the warnings but may also produce
     * less efficient code.
     */
@@ -53,21 +59,22 @@ index 000d7b1a8..16d290ccd 100644
  #    if !defined(PNG_USE_RESULT) && __has_attribute(__warn_unused_result__)
  #      define PNG_USE_RESULT __attribute__((__warn_unused_result__))
 diff --git a/pngerror.c b/pngerror.c
-index 29ebda794..4bab0a63c 100644
+index 72dc20e..618e162 100644
 --- a/pngerror.c
 +++ b/pngerror.c
-@@ -20,8 +20,8 @@
+@@ -19,9 +19,9 @@
  
  #if defined(PNG_READ_SUPPORTED) || defined(PNG_WRITE_SUPPORTED)
  
--static PNG_FUNCTION(void, png_default_error,PNGARG((png_const_structrp png_ptr,
--    png_const_charp error_message)),PNG_NORETURN);
-+PNG_FUNCTION(void, png_default_error,PNGARG((png_const_structrp png_ptr,
-+    png_const_charp error_message)),PNG_NORETURN static);
+-static PNG_FUNCTION(void /* PRIVATE */,
++PNG_FUNCTION(void /* PRIVATE */,
+ png_default_error,(png_const_structrp png_ptr, png_const_charp error_message),
+-    PNG_NORETURN);
++    PNG_NORETURN static);
  
  #ifdef PNG_WARNINGS_SUPPORTED
  static void /* PRIVATE */
-@@ -707,9 +707,9 @@ png_free_jmpbuf(png_structrp png_ptr)
+@@ -654,9 +654,9 @@ png_free_jmpbuf(png_structrp png_ptr)
   * function is used by default, or if the program supplies NULL for the
   * error function pointer in png_set_error_fn().
   */
@@ -78,12 +85,12 @@ index 29ebda794..4bab0a63c 100644
 +    PNG_NORETURN static)
  {
  #ifdef PNG_CONSOLE_IO_SUPPORTED
- #ifdef PNG_ERROR_NUMBERS_SUPPORTED
+    fprintf(stderr, "libpng error: %s", error_message ? error_message :
 diff --git a/pngpriv.h b/pngpriv.h
-index 9bfdb7134..2dcf50c7b 100644
+index a6c91ac..ea547d2 100644
 --- a/pngpriv.h
 +++ b/pngpriv.h
-@@ -396,13 +396,13 @@
+@@ -387,13 +387,13 @@
  
  #ifndef PNG_INTERNAL_FUNCTION
  #  define PNG_INTERNAL_FUNCTION(type, name, args, attributes)\
@@ -100,6 +107,3 @@ index 9bfdb7134..2dcf50c7b 100644
  #endif
  
  /* If floating or fixed point APIs are disabled they may still be compiled
--- 
-2.49.0
-
