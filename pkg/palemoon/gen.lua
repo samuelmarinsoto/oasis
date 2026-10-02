@@ -45,6 +45,7 @@ cflags{
 	'-include $dir/gen/include/mozilla-config.h',
 	-- external dependencies (house static stack)
 	'-isystem $builddir/pkg/nspr/include',
+	'-isystem $builddir/pkg/nss/include',
 	'-isystem $builddir/pkg/nss/include/nss',
 	'-isystem $builddir/pkg/nss/include/ssl',
 	'-isystem $builddir/pkg/nss/include/smime',
@@ -174,6 +175,10 @@ cflags{
 	'-I pkg/uxp/src/modules/brotli/dec',
 	-- uconv converter tables live in ucvlatin (never compiled, headers only)
 	'-I pkg/uxp/src/intl/uconv/ucvlatin',
+	-- gecko vendors a cairo fork; its headers (cairo-tee.h, the
+	-- subpixel-antialiasing enum, scaled-font hint metrics) must win
+	-- over pkg/cairo for gecko objects
+	'-I pkg/uxp/src/gfx/cairo/cairo/src',
 }
 
 -- every directory owning a compiled source (and every generated-header dir)
