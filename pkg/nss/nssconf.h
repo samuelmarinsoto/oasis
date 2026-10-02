@@ -6,3 +6,4 @@
 #define SOFTOKEN_LIB_NAME "libsoftokn3.so"
 #define SQLITE_UNSAFE_THREADS 1
 #define NSS_STATIC_SOFTOKEN 1
+#define NSS_NO_INIT_SUPPORT 1

@@ -41,6 +41,8 @@ cflags{
 	'-I $srcdir/lib/pki',
 	'-I $srcdir/lib/nss',
 	'-I $srcdir/lib/ssl',
+	'-I $srcdir/lib/ckfw',
+	'-I $srcdir/lib/ckfw/builtins',
 	'-I $srcdir/lib/smime',
 	'-I $srcdir/lib/softoken',
 	'-I $srcdir/lib/crmf',
@@ -143,7 +145,6 @@ pkg.hdrs = {
 	}),
 	-- public p12 headers needed by the palemoon NSS glue
 	copy('$outdir/include/nss', '$srcdir/lib/pkcs12', {'pkcs12.h', 'pkcs12t.h', 'p12.h', 'p12t.h'}),
-	copy('$outdir/include/nss', '$srcdir/lib/util', {'secpkcs12.h'}),
 	copy('$outdir/include/smime', '$srcdir/lib/smime', {
 		'cms.h',
 		'cmst.h',
@@ -157,7 +158,7 @@ pkg.deps = {
 	'pkg/nspr/headers',
 	'pkg/sqlite/headers',
 }
-ar('libnss.a', objects([=[
+local nssobjs = objects([=[
 lib/base/(
 		arena.c
 		error.c
@@ -367,7 +368,47 @@ lib/libpkix/pkix_pl_nss/system/(
 		pkix_pl_rwlock.c
 		pkix_pl_string.c
 )
-]=], {'$gendir/headers', 'pkg/nspr/headers', 'pkg/sqlite/headers'}))
+lib/ckfw/(
+		crypto.c
+		find.c
+		hash.c
+		instance.c
+		mechanism.c
+		mutex.c
+		object.c
+		session.c
+		sessobj.c
+		slot.c
+		token.c
+		wrap.c
+)
+]=], {'$gendir/headers', 'pkg/nspr/headers', 'pkg/sqlite/headers'})
+-- builtin roots module (ckbi): 10 checked-in sources + the dev-time generated
+-- certdata.c artifact (hash in certdata.sha256); emit nothing when the artifact
+-- is absent so fresh clones still generate a green manifest
+-- NB: io.open is CWD-relative (oasis root); pkg.dir is absolute
+if io.open(pkg.dir..'/certdata.c', 'r') then
+	for _, obj in ipairs(objects([=[
+lib/ckfw/builtins/(
+		anchor.c
+		bfind.c
+		binst.c
+		bobject.c
+		bsession.c
+		bslot.c
+		btoken.c
+		ckbiver.c
+		constants.c
+)
+coreconf/empty.c
+]=], {'$gendir/headers', 'pkg/nspr/headers'})) do
+		nssobjs[#nssobjs + 1] = obj
+	end
+	build('cc', '$outdir/lib/ckfw/builtins/certdata.c.o',
+		{'$dir/certdata.c', '||', '$gendir/deps'})
+	nssobjs[#nssobjs + 1] = '$outdir/lib/ckfw/builtins/certdata.c.o'
+end
+ar('libnss.a', nssobjs)
 ar('libnssutil.a', objects([=[
 lib/util/(
 		quickder.c
