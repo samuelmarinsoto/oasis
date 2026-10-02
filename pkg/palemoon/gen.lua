@@ -239,6 +239,7 @@ local function addobj(src, obj)
 		or src:match('gen/src/toolkit/xre/Unified_cpp_toolkit_xre0%.cpp$')
 		-- protobuf uses dynamic_cast in headers and generated code
 		or src:match('gen/src/toolkit/components/protobuf/')
+		or src:match('toolkit/components/protobuf/')
 		or src:match('dom/heapsnapshot/CoreDump%.pb%.[ch]%a*$')
 		or src:match('gen/src/gfx/layers/Unified_cpp_gfx_layers6%.cpp$')
 		or src:match('gen/src/gfx/layers/Unified_cpp_gfx_layers7%.cpp$')
