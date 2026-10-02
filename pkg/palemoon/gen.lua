@@ -28,6 +28,15 @@ cflags{
 	[[-D MOZ_WIDGET_TOOLKIT=\"gtk3\"]],
 	[[-D MOZ_APP_NAME=\"palemoon\"]],
 	[[-D MOZ_APP_DISPLAYNAME=\"OMoon\"]],
+	[[-D MOZ_CHILD_PROCESS_NAME=\"plugin-container\"]],
+	[[-D DLL_PREFIX=\"lib\"]],
+	[[-D DLL_SUFFIX=\".so\"]],
+	'-D SQLITE_MAX_LIKE_PATTERN_LENGTH=50000',
+	-- gfx/2d backend (gt gfx/2d/backend.mk DEFINES)
+	'-D USE_SSE2',
+	'-D USE_CAIRO',
+	'-D MOZ2D_HAS_MOZ_CAIRO',
+	'-D MOZ_ENABLE_FREETYPE',
 	'-include $dir/gen/include/mozilla/Char16.h',
 	'-I $dir/gen/include',
 	'-I $srcdir',
@@ -55,6 +64,7 @@ cflags{
 	'-isystem $builddir/pkg/libepoxy/include',
 	'-isystem $builddir/pkg/wayland/include',
 	'-isystem $builddir/pkg/libevent/src',
+	'-isystem $builddir/pkg/libevent/include',
 	'-isystem $builddir/pkg/linux-headers/include',
 	'-I $builddir/pkg/glib/include/glib-2.0',
 	'-I $builddir/pkg/glib/include/glib-2.0/glib',
@@ -157,6 +167,13 @@ cflags{
 	'-I pkg/uxp/src/gfx/skia/skia/include/codec',
 	'-I pkg/uxp/src/gfx/skia/skia/include/svg',
 	'-I pkg/uxp/src/gfx/skia/skia/include/views',
+	-- skia internal src dirs pulled in by unified members
+	'-I pkg/uxp/src/gfx/skia/skia/src/sfnt',
+	'-I pkg/uxp/src/gfx/skia/skia/src/lazy',
+	-- gecko's HTTP compress conv reaches into brotli's internal dec/state.h
+	'-I pkg/uxp/src/modules/brotli/dec',
+	-- uconv converter tables live in ucvlatin (never compiled, headers only)
+	'-I pkg/uxp/src/intl/uconv/ucvlatin',
 }
 
 -- every directory owning a compiled source (and every generated-header dir)
@@ -215,7 +232,35 @@ local function addobj(src, obj)
 		or src:match('gen/src/js/src/')
 		or src:match('gfx/thebes/gfxPlatformGtk%.cpp$')
 		or src:match('gen/src/toolkit/xre/Unified_cpp_toolkit_xre0%.cpp$')
+		-- protobuf uses dynamic_cast in headers and generated code
+		or src:match('gen/src/toolkit/components/protobuf/')
+		or src:match('dom/heapsnapshot/CoreDump%.pb%.[ch]%a*$')
+		or src:match('gen/src/gfx/layers/Unified_cpp_gfx_layers6%.cpp$')
+		or src:match('gen/src/gfx/layers/Unified_cpp_gfx_layers7%.cpp$')
 	if rtti then extra = (extra or '') .. ' -frtti -fexceptions' end
+	-- spidermonkey: the build force-includes js-confdefs.h and carries its
+	-- own backend defines (gt js/src/backend.mk); without these the
+	-- trace-logging and wasm-signal paths break
+	if src:match('gen/src/js/src/') or src:match('uxp/src/js/src/') then
+		extra = (extra or '')
+			.. ' -include $dir/gen/include/js/src/js-confdefs.h'
+			.. ' -D MOZ_HAS_MOZGLUE -D ENABLE_SHARED_ARRAY_BUFFER'
+			.. ' -D EXPORT_JS_API -D ENABLE_BINARYDATA -D ENABLE_SIMD'
+			.. ' -D JS_HAS_CTYPES -D FFI_BUILDING'
+	end
+	-- external-API code: gt compiled these without MOZILLA_INTERNAL_API
+	-- (nsStringAPI users); the xpcom/glue objects provide that API
+	local extapi = src:match('gen/src/xpcom/glue/')
+		or src:match('palemoon/components/build/nsModule%.cpp$')
+		or src:match('palemoon/components/dirprovider/')
+		or src:match('palemoon/components/feeds/')
+		or src:match('palemoon/components/shell/')
+	if extapi then extra = (extra or '') .. ' -U MOZILLA_INTERNAL_API' end
+	-- the launcher is a glue client (XRE_* decls live behind XPCOM_GLUE)
+	if src:match('palemoon/app/nsBrowserApp%.cpp$') then
+		extra = (extra or '')
+			.. ' -D XPCOM_GLUE -U MOZILLA_INTERNAL_API'
+	end
 	local cf
 	if deps then cf = {src, '||', deps} else cf = src end
 	local args
