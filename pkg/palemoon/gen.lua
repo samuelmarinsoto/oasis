@@ -289,6 +289,8 @@ pkg.deps = {
 	'pkg/uxp/psshparser/headers',
 	'pkg/uxp/libstagefright/headers',
 	'pkg/uxp/libjpeg/headers',
+	'pkg/libpng/headers',
+	'pkg/zlib/headers',
 	'pkg/libevent/headers',
 	'pkg/nspr/headers',
 	'pkg/nss/headers',
