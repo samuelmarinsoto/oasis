@@ -288,6 +288,7 @@ pkg.deps = {
 	'pkg/uxp/libmkv/headers',
 	'pkg/uxp/psshparser/headers',
 	'pkg/uxp/libstagefright/headers',
+	'pkg/uxp/libjpeg/headers',
 	'pkg/libevent/headers',
 	'pkg/nspr/headers',
 	'pkg/nss/headers',
