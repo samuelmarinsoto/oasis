@@ -151,6 +151,8 @@ pkg.hdrs = {
 	}),
 	-- public p12 headers needed by the palemoon NSS glue
 	copy('$outdir/include/nss', '$srcdir/lib/pkcs12', {'pkcs12.h', 'pkcs12t.h', 'p12.h', 'p12t.h'}),
+	-- PSM's nsPKCS12Blob.h includes the private p12plcy.h
+	copy('$outdir/include/nss', '$srcdir/lib/pkcs12', {'p12plcy.h'}),
 	copy('$outdir/include/smime', '$srcdir/lib/smime', {
 		'cms.h',
 		'cmst.h',
