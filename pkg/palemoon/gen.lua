@@ -401,4 +401,57 @@ objs[#objs + 1] = '$builddir/pkg/uxp/psshparser/libpsshparser.a'
 objs[#objs + 1] = '$builddir/pkg/uxp/libstagefright/libstagefright.a'
 ar('libpalemoon.a', objs)
 
+-- T-070: the static PIE link. Everything goes on the link line inside one
+-- group (-Wl,--start-group/--end-group spans $in and $ldlibs): the gecko
+-- <-> nspr/nss and glib <-> gio circularities need it, and unreferenced
+-- members cost nothing.
+local linklibs = {
+	'$outdir/libpalemoon.a',
+	'$builddir/pkg/nspr/libnspr.a',
+	'$builddir/pkg/nss/libnss.a',
+	'$builddir/pkg/nss/libnssutil.a',
+	'$builddir/pkg/nss/libssl.a',
+	'$builddir/pkg/nss/libsmime.a',
+	'$builddir/pkg/nss/libcrmf.a',
+	'$builddir/pkg/nss/libfreebl.a',
+	'$builddir/pkg/nss/libsoftokn.a',
+	'$builddir/pkg/sqlite/libsqlite3.a',
+	'$builddir/pkg/icu/libicui18n.a',
+	'$builddir/pkg/icu/libicuuc.a',
+	'$builddir/pkg/icu/libicudata.a',
+	'$builddir/pkg/glib/libglib-2.0.a',
+	'$builddir/pkg/glib/libgobject-2.0.a',
+	'$builddir/pkg/gio/libgio-2.0.a',
+	'$builddir/pkg/gmodule/libgmodule-2.0.a',
+	'$builddir/pkg/gtk3/libgtk-3.a',
+	'$builddir/pkg/gdk-pixbuf/libgdk_pixbuf-2.0.a',
+	'$builddir/pkg/atk/libatk-1.0.a',
+	'$builddir/pkg/pango/libpango-1.0.a',
+	'$builddir/pkg/cairo/libcairo.a',
+	'$builddir/pkg/pixman/libpixman.a',
+	'$builddir/pkg/freetype/libfreetype.a',
+	'$builddir/pkg/harfbuzz/libharfbuzz.a',
+	'$builddir/pkg/fribidi/libfribidi.a',
+	'$builddir/pkg/nspr/libplc4.a',
+	'$builddir/pkg/nspr/libplds4.a',
+	'$builddir/pkg/fontconfig/libfontconfig.a',
+	'$builddir/pkg/expat/libexpat.a',
+	'$builddir/pkg/libpng/libpng.a',
+	'$builddir/pkg/zlib/libz.a',
+	'$builddir/pkg/libffi/libffi.a',
+	'$builddir/pkg/wayland/libwayland-client.a',
+	'$builddir/pkg/wayland/libwayland-cursor.a',
+	'$builddir/pkg/wayland/libwayland-egl.a',
+	'$builddir/pkg/libxkbcommon/libxkbcommon.a',
+	'$builddir/pkg/libepoxy/libepoxy.a',
+	'$builddir/pkg/alsa-lib/libasound.a',
+	'$builddir/pkg/util-linux/libuuid.a',
+	'$builddir/pkg/openbsd/libbsd.a',
+	'$builddir/pkg/libevent/libevent.a',
+}
+exe('omoon', linklibs, nil, {
+	ldflags = '$ldflags -Wl,--start-group',
+	ldlibs = '-Wl,--end-group -lstdc++',
+})
+
 fetch 'git'
