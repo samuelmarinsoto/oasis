@@ -15,7 +15,7 @@ build('cat', '$outdir/config.h', {
 })
 
 pkg.hdrs = {
-	copy('$outdir/include/alsa', '$srcdir/include/alsa', {
+	copy('$outdir/include/alsa', '$srcdir/include', {
 		'asoundef.h',
 		'conf.h',
 		'control.h',
