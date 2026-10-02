@@ -116,7 +116,8 @@ local uxp = 'pkg/uxp/src/'
 -- the canonical root has to win
 cflags{
 	'-I $dir/gen/include/ipdl',
-	'-I $dir/gen/include/mozilla/dom',
+	-- NB: -I $dir/gen/include/mozilla/dom moved to the tail (after the
+	-- source dirs): early, its TreeWalker.h/Connection.h shadow the tree's
 	'-I $builddir/pkg/gtk3',
 	'-I pkg/uxp/src/ipc/chromium/src',
 	'-I pkg/uxp/src/intl/uconv/util',
@@ -214,7 +215,7 @@ end
 -- AFTER the source dirs: gt resolved same-named headers to LOCAL_INCLUDES
 -- copies first (FileLocation.h wants io's mozilla::AutoFDClose, not the
 -- glue typedef that a top-level copy shadows)
-cflags{'-I $dir/gen/include'}
+cflags{'-I $dir/gen/include', '-I $dir/gen/include/mozilla/dom'}
 
 local objs = {}
 
