@@ -43,6 +43,7 @@ cflags{
 	'-I $srcdir/lib/ssl',
 	'-I $srcdir/lib/ckfw',
 	'-I $srcdir/lib/ckfw/builtins',
+	'-I $srcdir/lib/mozpkix/include',
 	'-I $srcdir/lib/smime',
 	'-I $srcdir/lib/softoken',
 	'-I $srcdir/lib/crmf',
@@ -417,6 +418,19 @@ coreconf/empty.c
 	nssobjs[#nssobjs + 1] = '$outdir/lib/ckfw/builtins/certdata.c.o'
 end
 ar('libnss.a', nssobjs)
+ar('libmozpkix.a', objects([[lib/mozpkix/lib/pkix/(
+		pkixbuild.cpp
+		pkixc.cpp
+		pkixcert.cpp
+		pkixcheck.cpp
+		pkixder.cpp
+		pkixnames.cpp
+		pkixnss.cpp
+		pkixocsp.cpp
+		pkixresult.cpp
+		pkixtime.cpp
+		pkixverify.cpp
+)]], {'$gendir/headers', 'pkg/nspr/headers'}))
 ar('libnssutil.a', objects([=[
 lib/util/(
 		quickder.c

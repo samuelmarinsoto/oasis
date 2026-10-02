@@ -50,7 +50,8 @@ cflags{
 	'-isystem $builddir/pkg/nss/include',
 	'-isystem $builddir/pkg/nss/include/nss',
 	'-isystem $builddir/pkg/nss/include/ssl',
-	'-isystem $builddir/pkg/nss/include/smime',
+	'-isystem /pkg/nss/include/smime',
+	-- speex: the consumer header renames the symbols to moz_speex_*
 	'-isystem $builddir/pkg/icu/src/common',
 	'-isystem $builddir/pkg/icu/src/i18n',
 	'-isystem $builddir/pkg/sqlite/include',
@@ -259,6 +260,9 @@ local function addobj(src, obj)
 		or src:match('gen/src/js/src/')
 		or src:match('gfx/thebes/gfxPlatformGtk%.cpp$')
 		or src:match('gen/src/toolkit/xre/Unified_cpp_toolkit_xre0%.cpp$')
+		-- the Runnable key-function TU: emits the typeinfo the rtti
+		-- opt-out objects reference
+		or src:match('xpcom/threads/nsThreadUtils%.cpp$')
 		-- protobuf uses dynamic_cast in headers and generated code
 		or src:match('gen/src/toolkit/components/protobuf/')
 		or src:match('toolkit/components/protobuf/')
@@ -413,6 +417,7 @@ local linklibs = {
 	'$builddir/pkg/nss/libssl.a',
 	'$builddir/pkg/nss/libsmime.a',
 	'$builddir/pkg/nss/libcrmf.a',
+	'$builddir/pkg/nss/libmozpkix.a',
 	'$builddir/pkg/nss/libfreebl.a',
 	'$builddir/pkg/nss/libsoftokn.a',
 	'$builddir/pkg/sqlite/libsqlite3.a',
