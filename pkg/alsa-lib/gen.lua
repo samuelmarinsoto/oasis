@@ -2,6 +2,7 @@ cflags{
 	'-std=gnu99', '-Wall', '-Wno-unused-const-variable', '-Wno-maybe-uninitialized',
 	'-D _GNU_SOURCE',
 	'-I $outdir',
+	'-I $outdir/include',
 	'-I $dir',
 	'-I $dir/alsa',
 	'-I $srcdir/include',
@@ -35,11 +36,56 @@ pkg.hdrs = {
 		'seqmid.h',
 		'timer.h',
 	}),
+	-- <alsa/sound/*.h> consumers: the seq/timer sources include them via
+	-- the exported alsa/ prefix; the uapi/ level sits under it
+	copy('$outdir/include/alsa/sound/uapi', '$srcdir/include/sound/uapi', {
+		'asequencer.h',
+		'asoc.h',
+		'asound.h',
+		'asound_fm.h',
+		'emu10k1.h',
+		'hdsp.h',
+		'hdspm.h',
+		'sb16_csp.h',
+		'sscape_ioctl.h',
+		'tlv.h',
+	}),
+	copy('$outdir/include/alsa/sound', '$srcdir/include/sound', {
+		'asequencer.h',
+		'asoc.h',
+		'asound.h',
+		'asound_fm.h',
+		'emu10k1.h',
+		'hdsp.h',
+		'hdspm.h',
+		'sb16_csp.h',
+		'sscape_ioctl.h',
+		'tlv.h',
+		'type_compat.h',
+	}),
 	copy('$outdir/include/alsa', '$dir/alsa', {'asoundlib.h', 'version.h'}),
 }
 pkg.deps = {
 	'$outdir/config.h',
 	'pkg/linux-headers/headers',
+	-- the alsa/sound export copies: the package's own seq/timer/pcm
+	-- sources include <alsa/sound/*.h>, and nothing else orders the
+	-- copies before the compiles
+	'$outdir/include/alsa/sound/asequencer.h',
+	'$outdir/include/alsa/sound/asoc.h',
+	'$outdir/include/alsa/sound/asound.h',
+	'$outdir/include/alsa/sound/asound_fm.h',
+	'$outdir/include/alsa/sound/emu10k1.h',
+	'$outdir/include/alsa/sound/hdsp.h',
+	'$outdir/include/alsa/sound/hdspm.h',
+	'$outdir/include/alsa/sound/sb16_csp.h',
+	'$outdir/include/alsa/sound/sscape_ioctl.h',
+	'$outdir/include/alsa/sound/tlv.h',
+	'$outdir/include/alsa/sound/type_compat.h',
+	'$outdir/include/alsa/sound/uapi/asound.h',
+	'$outdir/include/alsa/sound/uapi/asequencer.h',
+	'$outdir/include/alsa/sound/uapi/asound_fm.h',
+	'$outdir/include/alsa/sound/uapi/tlv.h',
 }
 
 cc('src/pcm/pcm.c')
