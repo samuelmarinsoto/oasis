@@ -32,13 +32,15 @@ cflags{
 	[[-D DLL_PREFIX=\"lib\"]],
 	[[-D DLL_SUFFIX=\".so\"]],
 	'-D SQLITE_MAX_LIKE_PATTERN_LENGTH=50000',
+	[[-D MOZ_APP_VERSION=\"35.1.0a1\"]],
 	-- gfx/2d backend (gt gfx/2d/backend.mk DEFINES)
 	'-D USE_SSE2',
 	'-D USE_CAIRO',
 	'-D MOZ2D_HAS_MOZ_CAIRO',
 	'-D MOZ_ENABLE_FREETYPE',
 	'-include $dir/gen/include/mozilla/Char16.h',
-	'-I $dir/gen/include',
+	-- NB: -I $dir/gen/include is added AFTER the source dirs (end of this
+	-- section) - top-level generated headers must not shadow tree headers
 	'-I $srcdir',
 	'-I $srcdir/palemoon',
 	'-I pkg/uxp/src',
@@ -175,6 +177,11 @@ cflags{
 	'-I pkg/uxp/src/modules/brotli/dec',
 	-- uconv converter tables live in ucvlatin (never compiled, headers only)
 	'-I pkg/uxp/src/intl/uconv/ucvlatin',
+	'-I pkg/uxp/src/intl/uconv/ucvja',
+	'-I pkg/uxp/src/intl/uconv/ucvibm',
+	'-I pkg/uxp/src/intl/uconv/ucvcn',
+	'-I pkg/uxp/src/intl/uconv/ucvko',
+	'-I pkg/uxp/src/intl/uconv/ucvtw',
 	-- gecko vendors a cairo fork; its headers (cairo-tee.h, the
 	-- subpixel-antialiasing enum, scaled-font hint metrics) must win
 	-- over pkg/cairo for gecko objects
@@ -182,18 +189,36 @@ cflags{
 }
 
 -- every directory owning a compiled source (and every generated-header dir)
--- goes on the -I chain, replacing mozbuild's LOCAL_INCLUDES
+-- goes on the -I chain, replacing mozbuild's LOCAL_INCLUDES.
+-- ORDER MATTERS: uxp tree dirs must precede the gen/include copies so a
+-- tree header (accessible/base/TreeWalker.h) wins over the dist/include
+-- copy of a DIFFERENT same-named header (mozilla/dom/TreeWalker.h); app
+-- dirs follow, generated-header dirs last.
+local sdirs = { uxp = {}, app = {}, hdr = {} }
 for line in iterlines('gen/source-dirs.txt') do
 	local kind, d = line:match('^(%w+):(.*)$')
+	if kind then sdirs[kind][#sdirs[kind] + 1] = d end
+end
+for _, kind in ipairs({ 'uxp', 'app', 'hdr' }) do
+	for _, d in ipairs(sdirs[kind]) do
 	local root
 	if kind == 'app' then root = '$srcdir/palemoon/'
 	elseif kind == 'uxp' then root = uxp
 	else root = '$dir/gen/include/' end
 	-- dirs named 'base' would shadow the canonical roots above
-	if d ~= 'ipc/chromium/src/base' and not d:match('(^|/)base$') then
+	-- (accessible/base is whitelisted: its TreeWalker/FileUtils must
+	-- beat the dist copies)
+	if d ~= 'ipc/chromium/src/base' and not d:match('(^|/)base$')
+		or d == 'accessible/base' then
 		cflags{'-I ' .. root .. d}
 	end
+	end
 end
+-- top-level generated headers (xpidl nsIFoo.h, FileUtils.h, ...) come
+-- AFTER the source dirs: gt resolved same-named headers to LOCAL_INCLUDES
+-- copies first (FileLocation.h wants io's mozilla::AutoFDClose, not the
+-- glue typedef that a top-level copy shadows)
+cflags{'-I $dir/gen/include'}
 
 local objs = {}
 
