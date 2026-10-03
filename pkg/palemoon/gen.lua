@@ -272,6 +272,14 @@ local function addobj(src, obj)
 		or src:match('gen/src/gfx/layers/Unified_cpp_gfx_layers6%.cpp$')
 		or src:match('gen/src/gfx/layers/Unified_cpp_gfx_layers7%.cpp$')
 	if rtti then extra = (extra or '') .. ' -frtti -fexceptions' end
+	-- vendored protobuf (gt toolkit/components/protobuf/backend.mk): the
+	-- Mutex/once implementations are behind HAVE_PTHREAD; HAVE_ZLIB gates
+	-- gzip_stream.cc; NO_STATIC_INITIALIZER matches the vendored vintage
+	if src:match('protobuf/') then
+		extra = (extra or '')
+			.. ' -D GOOGLE_PROTOBUF_NO_STATIC_INITIALIZER -D HAVE_PTHREAD'
+			.. ' -D HAVE_ZLIB'
+	end
 	-- spidermonkey: the build force-includes js-confdefs.h and carries its
 	-- own backend defines (gt js/src/backend.mk); without these the
 	-- trace-logging and wasm-signal paths break
@@ -479,12 +487,13 @@ local linklibs = {
 	'$builddir/pkg/libepoxy/libepoxy.a',
 	'$builddir/pkg/alsa-lib/libasound.a',
 	'$builddir/pkg/util-linux/libuuid.a',
+	'$builddir/pkg/util-linux/libcommon.a',
 	'$builddir/pkg/openbsd/libbsd.a',
 	'$builddir/pkg/libevent/libevent.a',
 }
 exe('omoon', linklibs, nil, {
 	ldflags = '$ldflags -Wl,--start-group',
-	ldlibs = '-Wl,--end-group -lstdc++',
+	ldlibs = '-Wl,--end-group -lstdc++ -Wl,-z,notext',
 })
 
 fetch 'git'
