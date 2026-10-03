@@ -27,6 +27,5 @@ subgen 'angle'
 subgen 'libmkv'
 subgen 'psshparser'
 subgen 'libstagefright'
-subgen 'libjpeg'
 
 fetch 'git'
