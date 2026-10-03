@@ -159,7 +159,7 @@ cflags{
 	'-isystem $builddir/pkg/uxp/libmkv/include',
 	'-isystem $builddir/pkg/uxp/psshparser/include',
 	'-isystem $builddir/pkg/uxp/libstagefright/include',
-	'-isystem $builddir/pkg/uxp/protobuf/include',
+	'-isystem $builddir/pkg/protobuf/include',
 }
 
 -- skia stays inline (no standalone package)
@@ -264,7 +264,7 @@ pkg.deps = {
 	'pkg/uxp/psshparser/headers',
 	'pkg/uxp/libstagefright/headers',
 	'pkg/uxp/libjpeg/headers',
-	'pkg/uxp/protobuf/headers',
+	'pkg/protobuf/headers',
 	'pkg/libpng/headers',
 	'pkg/zlib/headers',
 	'pkg/libevent/headers',
@@ -412,7 +412,7 @@ objs[#objs + 1] = '$builddir/pkg/uxp/angle/libangle.a'
 objs[#objs + 1] = '$builddir/pkg/uxp/libmkv/libmkv.a'
 objs[#objs + 1] = '$builddir/pkg/uxp/psshparser/libpsshparser.a'
 objs[#objs + 1] = '$builddir/pkg/uxp/libstagefright/libstagefright.a'
-objs[#objs + 1] = '$builddir/pkg/uxp/protobuf/libprotobuf.a'
+objs[#objs + 1] = '$builddir/pkg/protobuf/libprotobuf.a'
 ar('libpalemoon.a', objs)
 
 -- T-070: the static PIE link. Everything goes on the link line inside one
@@ -447,7 +447,7 @@ local linklibs = {
 	'$builddir/pkg/uxp/libmkv/libmkv.a',
 	'$builddir/pkg/uxp/psshparser/libpsshparser.a',
 	'$builddir/pkg/uxp/libstagefright/libstagefright.a',
-	'$builddir/pkg/uxp/protobuf/libprotobuf.a',
+	'$builddir/pkg/protobuf/libprotobuf.a',
 	-- the gtk/core stack
 	'$builddir/pkg/nspr/libnspr.a',
 	'$builddir/pkg/nss/libnss.a',
