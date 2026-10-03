@@ -58,6 +58,23 @@ build('copy', '$outdir/gdk/gdkdbusgenerated.h', '$dir/gtkdbusgenerated.h')
 build('copy', '$outdir/gtk/gtktypefuncs.inc', '$dir/gtktypefuncs.inc')
 build('copy', '$outdir/gtk/gtkdbusgenerated.h', '$dir/gtkdbusgenerated.h')
 
+-- the gdk/gtk generated headers live outside include/ (consumers point
+-- -I straight at $outdir/gdk and $outdir/gtk); bundle them so consumer
+-- compiles can order behind them
+phony('gen-hdrs', {
+	'$outdir/gdk/gdkconfig.h',
+	'$outdir/gdk/gdkenumtypes.h',
+	'$outdir/gdk/gdkversionmacros.h',
+	'$outdir/gdk/gdkresources.h',
+	'$outdir/gdk/gdkdbusgenerated.h',
+	'$outdir/gtk/gtkversion.h',
+	'$outdir/gtk/gtktypebuiltins.h',
+	'$outdir/gtk/gtkprivatetypebuiltins.h',
+	'$outdir/gtk/gtkresources.h',
+	'$outdir/gtk/gtkdbusgenerated.h',
+	'$outdir/gtk/gtktypefuncs.inc',
+})
+
 pkg.hdrs = {
 	copy('$outdir/include/gtk-3.0/gdk', '$srcdir/gdk', paths([[
 		gdk-autocleanup.h gdk.h gdkapplaunchcontext.h gdkcairo.h

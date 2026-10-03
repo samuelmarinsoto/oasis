@@ -237,6 +237,7 @@ pkg.deps = {
 	'pkg/freetype/headers',
 	'pkg/fontconfig/headers',
 	'pkg/gtk3/headers',
+	'pkg/gtk3/gen-hdrs',
 	'pkg/libffi/headers',
 	'pkg/fribidi/headers',
 	'pkg/harfbuzz/headers',
