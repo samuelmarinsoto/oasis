@@ -69,6 +69,7 @@ cflags{
 	'-isystem $builddir/pkg/wayland/include',
 	'-isystem $builddir/pkg/libevent/src',
 	'-isystem $builddir/pkg/libevent/include',
+	'-isystem $builddir/pkg/hunspell/include',
 	-- uxp/libjpeg exports (jpeglib.h etc. for the image decoders)
 	'-isystem $builddir/pkg/uxp/libjpeg/include',
 	'-isystem $builddir/pkg/linux-headers/include',
@@ -381,6 +382,7 @@ pkg.deps = {
 	'pkg/libevent/headers',
 	'pkg/nspr/headers',
 	'pkg/nss/headers',
+	'pkg/hunspell/headers',
 	'pkg/icu/headers',
 	'pkg/sqlite/headers',
 	'pkg/libevent/headers',
@@ -402,6 +404,7 @@ objs[#objs + 1] = '$builddir/pkg/libsoundtouch/libsoundtouch.a'
 objs[#objs + 1] = '$builddir/pkg/kissfft/libkissfft.a'
 objs[#objs + 1] = '$builddir/pkg/libspeex/libspeex.a'
 objs[#objs + 1] = '$builddir/pkg/ots/libots.a'
+objs[#objs + 1] = '$builddir/pkg/hunspell/libhunspell.a'
 objs[#objs + 1] = '$builddir/pkg/libcubeb/liblibcubeb.a'
 objs[#objs + 1] = '$builddir/pkg/nestegg/libnestegg.a'
 objs[#objs + 1] = '$builddir/pkg/libjxl/libjxl.a'
@@ -435,6 +438,7 @@ local linklibs = {
 	'$builddir/pkg/kissfft/libkissfft.a',
 	'$builddir/pkg/libspeex/libspeex.a',
 	'$builddir/pkg/ots/libots.a',
+	'$builddir/pkg/hunspell/libhunspell.a',
 	'$builddir/pkg/libcubeb/liblibcubeb.a',
 	'$builddir/pkg/nestegg/libnestegg.a',
 	'$builddir/pkg/libjxl/libjxl.a',
