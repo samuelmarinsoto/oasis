@@ -14,6 +14,7 @@ cflags{
 build('copy', '$outdir/include/glib-2.0/gmodule.h', '$srcdir/gmodule/gmodule.h')
 pkg.hdrs = {
 	copy('$outdir/include/glib-2.0', '$dir', {'gmoduleconf.h'}),
+	'$outdir/include/glib-2.0/gmodule.h',
 	install=true,
 }
 pkg.deps = {'$gendir/headers', 'pkg/glib/headers'}

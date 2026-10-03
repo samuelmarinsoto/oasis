@@ -91,6 +91,7 @@ pkg.hdrs = {
 	copy('$outdir/include/glib-2.0/gobject', '$dir', {'glib-enumtypes.h'}),
 	copy('$outdir/include/glib-2.0', '$srcdir/glib', {'glib.h', 'glib-object.h'}),
 	copy('$outdir/include/glib-2.0', '$srcdir/gobject', {'gobject.h'}),
+	'$outdir/include/glib-2.0/glibconfig.h',
 	install=true,
 }
 pkg.deps = {'$gendir/headers', '$outdir/include/glib-2.0/glibconfig.h', 'pkg/libffi/headers'}

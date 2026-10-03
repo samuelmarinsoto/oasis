@@ -14,6 +14,9 @@ build('copy', '$outdir/include/atk-1.0/atk/atkversion.h', '$dir/atkversion.h')
 build('copy', '$outdir/include/atk-1.0/atk/atkmarshal.h', '$dir/atkmarshal.h')
 
 pkg.hdrs = {
+	'$outdir/include/atk-1.0/atk/atk-enum-types.h',
+	'$outdir/include/atk-1.0/atk/atkversion.h',
+	'$outdir/include/atk-1.0/atk/atkmarshal.h',
 	copy('$outdir/include/atk-1.0/atk', '$srcdir/atk', paths([[
 		atk.h atkaction.h atkcomponent.h atkdocument.h atkeditabletext.h
 		atkgobjectaccessible.h atkhyperlink.h atkhyperlinkimpl.h

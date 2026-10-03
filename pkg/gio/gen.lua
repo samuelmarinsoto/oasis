@@ -57,6 +57,9 @@ build('copy', '$outdir/include/glib-2.0/gio/gioenumtypes.h', '$dir/gio-enum-type
 
 pkg.hdrs = {
 	copy('$outdir/include/glib-2.0/gio', '$srcdir/gio', hdrnames),
+	'$outdir/include/glib-2.0/gio/gio-enum-types.h',
+	'$outdir/include/glib-2.0/gio/gioenumtypes.h',
+	'$outdir/include/glib-2.0/gio/gnetworking.h',
 	install=true,
 }
 pkg.deps = {

@@ -42,6 +42,8 @@ build('copy', '$outdir/include/pango-1.0/pango/pango-enum-types.h', '$dir/pango-
 
 pkg.hdrs = {
 	copy('$outdir/include/pango-1.0/pango', '$srcdir/pango', hdrnames),
+	'$outdir/include/pango-1.0/pango/pango-features.h',
+	'$outdir/include/pango-1.0/pango/pango-enum-types.h',
 	install=true,
 }
 pkg.deps = {
