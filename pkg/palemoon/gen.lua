@@ -158,6 +158,7 @@ cflags{
 	'-isystem $builddir/pkg/uxp/libmkv/include',
 	'-isystem $builddir/pkg/uxp/psshparser/include',
 	'-isystem $builddir/pkg/uxp/libstagefright/include',
+	'-isystem $builddir/pkg/uxp/protobuf/include',
 }
 
 -- skia stays inline (no standalone package)
@@ -220,6 +221,61 @@ end
 -- glue typedef that a top-level copy shadows)
 cflags{'-I $dir/gen/include', '-I $dir/gen/include/mozilla/dom'}
 
+-- pkg.deps MUST precede the object loops:
+-- it is only wired into compiles issued while it is set, and the
+-- exported-header consumers (heapsnapshot, layerscope, ...) have to order
+-- after the packages' headers phonies (the T-079 cold-headers race)
+pkg.deps = {
+	'pkg/glib/headers',
+	'pkg/gio/headers',
+	'pkg/gmodule/headers',
+	'pkg/pango/headers',
+	'pkg/gdk-pixbuf/headers',
+	'pkg/cairo/headers',
+	'pkg/fribidi/headers',
+	'pkg/harfbuzz/headers',
+	'pkg/atk/headers',
+	'pkg/wayland/headers',
+	'pkg/wayland-protocols/headers',
+	'pkg/libepoxy/headers',
+	'pkg/libxkbcommon/headers',
+	'pkg/libvpx/headers',
+	'pkg/libogg/headers',
+	'pkg/libvorbis/headers',
+	'pkg/libopus/headers',
+	'pkg/libtheora/headers',
+	'pkg/libwebp/headers',
+	'pkg/brotli/headers',
+	'pkg/woff2/headers',
+	'pkg/graphite2/headers',
+	'pkg/libsoundtouch/headers',
+	'pkg/kissfft/headers',
+	'pkg/libspeex/headers',
+	'pkg/ots/headers',
+	'pkg/libcubeb/headers',
+	'pkg/nestegg/headers',
+	'pkg/libjxl/headers',
+	'pkg/libyuv/headers',
+	'pkg/uxp/fdlibm/headers',
+	'pkg/uxp/qcms/headers',
+	'pkg/uxp/angle/headers',
+	'pkg/uxp/libmkv/headers',
+	'pkg/uxp/psshparser/headers',
+	'pkg/uxp/libstagefright/headers',
+	'pkg/uxp/libjpeg/headers',
+	'pkg/uxp/protobuf/headers',
+	'pkg/libpng/headers',
+	'pkg/zlib/headers',
+	'pkg/libevent/headers',
+	'pkg/nspr/headers',
+	'pkg/nss/headers',
+	'pkg/sqlite/headers',
+	'pkg/libevent/headers',
+	'pkg/linux-headers/headers',
+	'pkg/uxp/fetch',
+	'pkg/palemoon/fetch',
+}
+
 local objs = {}
 
 -- include dirs for unified build files (their quoted includes name the
@@ -265,21 +321,10 @@ local function addobj(src, obj)
 		-- the Runnable key-function TU: emits the typeinfo the rtti
 		-- opt-out objects reference
 		or src:match('xpcom/threads/nsThreadUtils%.cpp$')
-		-- protobuf uses dynamic_cast in headers and generated code
-		or src:match('gen/src/toolkit/components/protobuf/')
-		or src:match('toolkit/components/protobuf/')
 		or src:match('dom/heapsnapshot/CoreDump%.pb%.[ch]%a*$')
 		or src:match('gen/src/gfx/layers/Unified_cpp_gfx_layers6%.cpp$')
 		or src:match('gen/src/gfx/layers/Unified_cpp_gfx_layers7%.cpp$')
 	if rtti then extra = (extra or '') .. ' -frtti -fexceptions' end
-	-- vendored protobuf (gt toolkit/components/protobuf/backend.mk): the
-	-- Mutex/once implementations are behind HAVE_PTHREAD; HAVE_ZLIB gates
-	-- gzip_stream.cc; NO_STATIC_INITIALIZER matches the vendored vintage
-	if src:match('protobuf/') then
-		extra = (extra or '')
-			.. ' -D GOOGLE_PROTOBUF_NO_STATIC_INITIALIZER -D HAVE_PTHREAD'
-			.. ' -D HAVE_ZLIB'
-	end
 	-- spidermonkey: the build force-includes js-confdefs.h and carries its
 	-- own backend defines (gt js/src/backend.mk); without these the
 	-- trace-logging and wasm-signal paths break
@@ -338,56 +383,6 @@ for line in iterlines('gen/app-objects.txt') do
 	end
 end
 
-pkg.deps = {
-	'pkg/glib/headers',
-	'pkg/gio/headers',
-	'pkg/gmodule/headers',
-	'pkg/pango/headers',
-	'pkg/gdk-pixbuf/headers',
-	'pkg/cairo/headers',
-	'pkg/fribidi/headers',
-	'pkg/harfbuzz/headers',
-	'pkg/atk/headers',
-	'pkg/wayland/headers',
-	'pkg/wayland-protocols/headers',
-	'pkg/libepoxy/headers',
-	'pkg/libxkbcommon/headers',
-	'pkg/libvpx/headers',
-	'pkg/libogg/headers',
-	'pkg/libvorbis/headers',
-	'pkg/libopus/headers',
-	'pkg/libtheora/headers',
-	'pkg/libwebp/headers',
-	'pkg/brotli/headers',
-	'pkg/woff2/headers',
-	'pkg/graphite2/headers',
-	'pkg/libsoundtouch/headers',
-	'pkg/kissfft/headers',
-	'pkg/libspeex/headers',
-	'pkg/ots/headers',
-	'pkg/libcubeb/headers',
-	'pkg/nestegg/headers',
-	'pkg/libjxl/headers',
-	'pkg/libyuv/headers',
-	'pkg/uxp/fdlibm/headers',
-	'pkg/uxp/qcms/headers',
-	'pkg/uxp/angle/headers',
-	'pkg/uxp/libmkv/headers',
-	'pkg/uxp/psshparser/headers',
-	'pkg/uxp/libstagefright/headers',
-	'pkg/uxp/libjpeg/headers',
-	'pkg/libpng/headers',
-	'pkg/zlib/headers',
-	'pkg/libevent/headers',
-	'pkg/nspr/headers',
-	'pkg/nss/headers',
-	'pkg/icu/headers',
-	'pkg/sqlite/headers',
-	'pkg/libevent/headers',
-	'pkg/linux-headers/headers',
-	'pkg/uxp/fetch',
-	'pkg/palemoon/fetch',
-}
 
 objs[#objs + 1] = '$builddir/pkg/libvpx/libvpx.a'
 objs[#objs + 1] = '$builddir/pkg/libogg/libogg.a'
@@ -413,6 +408,7 @@ objs[#objs + 1] = '$builddir/pkg/uxp/angle/libangle.a'
 objs[#objs + 1] = '$builddir/pkg/uxp/libmkv/libmkv.a'
 objs[#objs + 1] = '$builddir/pkg/uxp/psshparser/libpsshparser.a'
 objs[#objs + 1] = '$builddir/pkg/uxp/libstagefright/libstagefright.a'
+objs[#objs + 1] = '$builddir/pkg/uxp/protobuf/libprotobuf.a'
 ar('libpalemoon.a', objs)
 
 -- T-070: the static PIE link. Everything goes on the link line inside one
@@ -446,6 +442,7 @@ local linklibs = {
 	'$builddir/pkg/uxp/libmkv/libmkv.a',
 	'$builddir/pkg/uxp/psshparser/libpsshparser.a',
 	'$builddir/pkg/uxp/libstagefright/libstagefright.a',
+	'$builddir/pkg/uxp/protobuf/libprotobuf.a',
 	-- the gtk/core stack
 	'$builddir/pkg/nspr/libnspr.a',
 	'$builddir/pkg/nss/libnss.a',
