@@ -16,7 +16,8 @@ cflags{
 build('copy', '$outdir/include/prcpucfg.h', '$srcdir/pr/include/md/_linux.cfg')
 build('printf', '$outdir/include/_pr_bld.h', {}, {args=[['#define _BUILD_STRING "1970-01-01 00:00:00"\n#define _BUILD_TIME 0\n#define _PRODUCTION "nspr"\n']]})
 
-pkg.hdrs = copy('$outdir/include', '$srcdir/pr/include', {
+pkg.hdrs = {}
+table.insert(pkg.hdrs, copy('$outdir/include', '$srcdir/pr/include', {
 	'nspr.h', 'pratom.h', 'prbit.h', 'prclist.h', 'prcmon.h', 'prcountr.h',
 	'prcvar.h', 'prdtoa.h', 'prenv.h', 'prerr.h', 'prerror.h', 'prinet.h',
 	'prinit.h', 'prinrval.h', 'prio.h', 'pripcsem.h', 'prlink.h', 'prlock.h',
@@ -24,16 +25,18 @@ pkg.hdrs = copy('$outdir/include', '$srcdir/pr/include', {
 	'prolock.h', 'prpdce.h', 'prprf.h', 'prproces.h', 'prrng.h', 'prrwlock.h',
 	'prshm.h', 'prshma.h', 'prsystem.h', 'prthread.h', 'prtime.h', 'prtpool.h',
 	'prtrace.h', 'prtypes.h', 'prvrsion.h', 'prwin16.h'
-})
-copy('$outdir/include/md', '$srcdir/pr/include/md', {
+}))
+table.insert(pkg.hdrs, copy('$outdir/include/md', '$srcdir/pr/include/md', {
 	'_pth.h', '_nspr_pthread.h',
-})
-copy('$outdir/include/obsolete', '$srcdir/pr/include/obsolete', {
+}))
+table.insert(pkg.hdrs, copy('$outdir/include/obsolete', '$srcdir/pr/include/obsolete', {
 	'protypes.h',
-})
-copy('$outdir/include', '$srcdir/lib/ds', {'plarena.h', 'plarenas.h', 'plhash.h'})
-copy('$outdir/include', '$srcdir/lib/libc/include', {'plbase64.h', 'plerror.h', 'plgetopt.h', 'plstr.h'})
-copy('$outdir/include/private', '$srcdir/pr/include/private', {'pprio.h', 'pprmwait.h', 'pprthred.h', 'primpl.h', 'prpriv.h'})
+}))
+table.insert(pkg.hdrs, copy('$outdir/include', '$srcdir/lib/ds', {'plarena.h', 'plarenas.h', 'plhash.h'}))
+table.insert(pkg.hdrs, copy('$outdir/include', '$srcdir/lib/libc/include', {'plbase64.h', 'plerror.h', 'plgetopt.h', 'plstr.h'}))
+table.insert(pkg.hdrs, copy('$outdir/include/private', '$srcdir/pr/include/private', {'pprio.h', 'pprmwait.h', 'pprthred.h', 'primpl.h', 'prpriv.h'}))
+table.insert(pkg.hdrs, '$outdir/include/prcpucfg.h')
+table.insert(pkg.hdrs, '$outdir/include/_pr_bld.h')
 pkg.deps = {
 	'$gendir/headers',
 	'$outdir/include/prcpucfg.h',
