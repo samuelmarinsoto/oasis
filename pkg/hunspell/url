@@ -1,0 +1,2 @@
+output = "hunspell-1.7.0.tar.gz"
+url = "https://codeload.github.com/hunspell/hunspell/tar.gz/refs/tags/v1.7.0"
