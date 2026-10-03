@@ -53,7 +53,7 @@ lib('libjpeg-turbo.a', [[
 ]])
 
 pkg.hdrs = {
-	copy('$outdir/include', '$srcdir', {'jmorecfg.h', 'jpeglib.h'}),
+	copy('$outdir/include', '$srcdir', {'jerror.h', 'jmorecfg.h', 'jpeglib.h'}),
 	copy('$outdir/include', '$dir', {'jconfig.h'}),
 }
 
