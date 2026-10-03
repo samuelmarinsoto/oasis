@@ -1,0 +1,367 @@
+mozilla's m-c-changes.patch, compiler portability for protobuf 2.6.1.
+
+Carried from the UXP vendored copy (toolkit/components/protobuf): the
+m-c changes.patch plus same-class deltas at the UXP vintage. Compile
+fixes for modern gcc/libstdc++, no functional change: drop the config.h
+include, std::iterator removal, hash_map/type_traits selection,
+gcc atomics guards, gcc 4.8+ printf checking, sparc 64-bit probe.
+diff --git a/google/protobuf/io/gzip_stream.cc b/google/protobuf/io/gzip_stream.cc
+index ee28696..6e4054e 100644
+--- a/google/protobuf/io/gzip_stream.cc
++++ b/google/protobuf/io/gzip_stream.cc
+@@ -33,7 +33,6 @@
+ // This file contains the implementation of classes GzipInputStream and
+ // GzipOutputStream.
+ 
+-#include "config.h"
+ 
+ #if HAVE_ZLIB
+ #include <google/protobuf/io/gzip_stream.h>
+diff --git a/google/protobuf/io/zero_copy_stream_impl_lite.h b/google/protobuf/io/zero_copy_stream_impl_lite.h
+index e18da72..44c6e77 100644
+--- a/google/protobuf/io/zero_copy_stream_impl_lite.h
++++ b/google/protobuf/io/zero_copy_stream_impl_lite.h
+@@ -44,6 +44,7 @@
+ #ifndef GOOGLE_PROTOBUF_IO_ZERO_COPY_STREAM_IMPL_LITE_H__
+ #define GOOGLE_PROTOBUF_IO_ZERO_COPY_STREAM_IMPL_LITE_H__
+ 
++#include <vector> /* See Bug 1186561 */
+ #include <string>
+ #include <iosfwd>
+ #include <google/protobuf/io/zero_copy_stream.h>
+diff --git a/google/protobuf/repeated_field.h b/google/protobuf/repeated_field.h
+index 5005183..29fe823 100644
+--- a/google/protobuf/repeated_field.h
++++ b/google/protobuf/repeated_field.h
+@@ -1250,23 +1250,14 @@ namespace internal {
+ // This code based on net/proto/proto-array-internal.h by Jeffrey Yasskin
+ // (jyasskin@google.com).
+ template<typename Element>
+-class RepeatedPtrIterator
+-    : public std::iterator<
+-          std::random_access_iterator_tag, Element> {
++class RepeatedPtrIterator {
+  public:
+   typedef RepeatedPtrIterator<Element> iterator;
+-  typedef std::iterator<
+-          std::random_access_iterator_tag, Element> superclass;
+-
+-  // Shadow the value_type in std::iterator<> because const_iterator::value_type
+-  // needs to be T, not const T.
+-  typedef typename remove_const<Element>::type value_type;
+-
+-  // Let the compiler know that these are type names, so we don't have to
+-  // write "typename" in front of them everywhere.
+-  typedef typename superclass::reference reference;
+-  typedef typename superclass::pointer pointer;
+-  typedef typename superclass::difference_type difference_type;
++  typedef std::random_access_iterator_tag iterator_category;
++  typedef Element value_type;
++  typedef std::ptrdiff_t difference_type;
++  typedef Element* pointer;
++  typedef Element& reference;
+ 
+   RepeatedPtrIterator() : it_(NULL) {}
+   explicit RepeatedPtrIterator(void* const* it) : it_(it) {}
+@@ -1346,22 +1337,14 @@ class RepeatedPtrIterator
+ // referenced by the iterator.  It should either be "void *" for a mutable
+ // iterator, or "const void *" for a constant iterator.
+ template<typename Element, typename VoidPtr>
+-class RepeatedPtrOverPtrsIterator
+-    : public std::iterator<std::random_access_iterator_tag, Element*> {
++class RepeatedPtrOverPtrsIterator {
+  public:
+   typedef RepeatedPtrOverPtrsIterator<Element, VoidPtr> iterator;
+-  typedef std::iterator<
+-          std::random_access_iterator_tag, Element*> superclass;
+-
+-  // Shadow the value_type in std::iterator<> because const_iterator::value_type
+-  // needs to be T, not const T.
+-  typedef typename remove_const<Element*>::type value_type;
+-
+-  // Let the compiler know that these are type names, so we don't have to
+-  // write "typename" in front of them everywhere.
+-  typedef typename superclass::reference reference;
+-  typedef typename superclass::pointer pointer;
+-  typedef typename superclass::difference_type difference_type;
++  typedef std::random_access_iterator_tag iterator_category;
++  typedef Element value_type;
++  typedef std::ptrdiff_t difference_type;
++  typedef Element* pointer;
++  typedef Element& reference;
+ 
+   RepeatedPtrOverPtrsIterator() : it_(NULL) {}
+   explicit RepeatedPtrOverPtrsIterator(VoidPtr* it) : it_(it) {}
+diff --git a/google/protobuf/stubs/atomicops.h b/google/protobuf/stubs/atomicops.h
+index b1336e3..e6da1fc 100644
+--- a/google/protobuf/stubs/atomicops.h
++++ b/google/protobuf/stubs/atomicops.h
+@@ -78,7 +78,11 @@ typedef intptr_t Atomic64;
+ 
+ // Use AtomicWord for a machine-sized pointer.  It will use the Atomic32 or
+ // Atomic64 routines below, depending on your architecture.
++#if defined(__OpenBSD__) && !defined(GOOGLE_PROTOBUF_ARCH_64_BIT)
++typedef Atomic32 AtomicWord;
++#else
+ typedef intptr_t AtomicWord;
++#endif
+ 
+ // Atomically execute:
+ //      result = *ptr;
+diff --git a/google/protobuf/stubs/common.cc b/google/protobuf/stubs/common.cc
+index 1e02b22..8995859 100644
+--- a/google/protobuf/stubs/common.cc
++++ b/google/protobuf/stubs/common.cc
+@@ -36,13 +36,12 @@
+ #include <errno.h>
+ #include <vector>
+ 
+-#include "config.h"
+ 
+ #ifdef _WIN32
+ #define WIN32_LEAN_AND_MEAN  // We only need minimal includes
+ #include <windows.h>
+ #define snprintf _snprintf    // see comment in strutil.cc
+-#elif defined(HAVE_PTHREAD)
++#elif defined(HAVE_PTHREAD_H)
+ #include <pthread.h>
+ #else
+ #error "No suitable threading library available."
+diff --git a/google/protobuf/stubs/common.h b/google/protobuf/stubs/common.h
+index f096fa9..fa6fe3c 100644
+--- a/google/protobuf/stubs/common.h
++++ b/google/protobuf/stubs/common.h
+@@ -368,60 +368,9 @@ using internal::down_cast;
+ // the expression is false, most compilers will issue a warning/error
+ // containing the name of the variable.
+ 
+-namespace internal {
+-
+-template <bool>
+-struct CompileAssert {
+-};
+-
+-}  // namespace internal
+-
+-#undef GOOGLE_COMPILE_ASSERT
+-#define GOOGLE_COMPILE_ASSERT(expr, msg) \
+-  typedef ::google::protobuf::internal::CompileAssert<(bool(expr))> \
+-          msg[bool(expr) ? 1 : -1]
++#define GOOGLE_COMPILE_ASSERT(expr, msg) static_assert(expr, #msg)
+ 
+ 
+-// Implementation details of COMPILE_ASSERT:
+-//
+-// - COMPILE_ASSERT works by defining an array type that has -1
+-//   elements (and thus is invalid) when the expression is false.
+-//
+-// - The simpler definition
+-//
+-//     #define COMPILE_ASSERT(expr, msg) typedef char msg[(expr) ? 1 : -1]
+-//
+-//   does not work, as gcc supports variable-length arrays whose sizes
+-//   are determined at run-time (this is gcc's extension and not part
+-//   of the C++ standard).  As a result, gcc fails to reject the
+-//   following code with the simple definition:
+-//
+-//     int foo;
+-//     COMPILE_ASSERT(foo, msg); // not supposed to compile as foo is
+-//                               // not a compile-time constant.
+-//
+-// - By using the type CompileAssert<(bool(expr))>, we ensures that
+-//   expr is a compile-time constant.  (Template arguments must be
+-//   determined at compile-time.)
+-//
+-// - The outter parentheses in CompileAssert<(bool(expr))> are necessary
+-//   to work around a bug in gcc 3.4.4 and 4.0.1.  If we had written
+-//
+-//     CompileAssert<bool(expr)>
+-//
+-//   instead, these compilers will refuse to compile
+-//
+-//     COMPILE_ASSERT(5 > 0, some_message);
+-//
+-//   (They seem to think the ">" in "5 > 0" marks the end of the
+-//   template argument list.)
+-//
+-// - The array size is (bool(expr) ? 1 : -1), instead of simply
+-//
+-//     ((expr) ? 1 : -1).
+-//
+-//   This is to avoid running into a bug in MS VC 7.1, which
+-//   causes ((0.0) ? 1 : -1) to incorrectly evaluate to 1.
+ 
+ // ===================================================================
+ // from google3/base/scoped_ptr.h
+@@ -638,6 +587,17 @@ enum LogLevel {
+ #else
+   LOGLEVEL_DFATAL = LOGLEVEL_FATAL
+ #endif
++
++#ifdef ERROR
++  // ERROR is defined as 0 on some windows builds, so `GOOGLE_LOG(ERROR, ...)`
++  // expands into `GOOGLE_LOG(0, ...)` which then expands into
++  // `someGoogleLogging(LOGLEVEL_0, ...)`. This is not ideal, because the
++  // GOOGLE_LOG macro expects to expand itself into
++  // `someGoogleLogging(LOGLEVEL_ERROR, ...)` instead. The workaround to get
++  // everything building is to simply define LOGLEVEL_0 as LOGLEVEL_ERROR and
++  // move on with our lives.
++  , LOGLEVEL_0 = LOGLEVEL_ERROR
++#endif
+ };
+ 
+ namespace internal {
+diff --git a/google/protobuf/stubs/hash.h b/google/protobuf/stubs/hash.h
+index 5b6a073..3640b89 100644
+--- a/google/protobuf/stubs/hash.h
++++ b/google/protobuf/stubs/hash.h
+@@ -37,7 +37,6 @@
+ 
+ #include <string.h>
+ #include <google/protobuf/stubs/common.h>
+-#include "config.h"
+ 
+ #if defined(HAVE_HASH_MAP) && defined(HAVE_HASH_SET)
+ #include HASH_MAP_H
+diff --git a/google/protobuf/stubs/platform_macros.h b/google/protobuf/stubs/platform_macros.h
+index 7956d07..b05f2f8 100644
+--- a/google/protobuf/stubs/platform_macros.h
++++ b/google/protobuf/stubs/platform_macros.h
+@@ -67,7 +67,7 @@
+ #define GOOGLE_PROTOBUF_ARCH_32_BIT 1
+ #elif defined(sparc)
+ #define GOOGLE_PROTOBUF_ARCH_SPARC 1
+-#ifdef SOLARIS_64BIT_ENABLED
++#ifdef __arch64__
+ #define GOOGLE_PROTOBUF_ARCH_64_BIT 1
+ #else
+ #define GOOGLE_PROTOBUF_ARCH_32_BIT 1
+diff --git a/google/protobuf/stubs/stringprintf.cc b/google/protobuf/stubs/stringprintf.cc
+index 3272d8e..83fdfe4 100644
+--- a/google/protobuf/stubs/stringprintf.cc
++++ b/google/protobuf/stubs/stringprintf.cc
+@@ -37,7 +37,6 @@
+ #include <stdio.h> // MSVC requires this for _vsnprintf
+ #include <vector>
+ #include <google/protobuf/stubs/common.h>
+-#include <google/protobuf/testing/googletest.h>
+ 
+ namespace google {
+ namespace protobuf {
+diff --git a/google/protobuf/stubs/strutil.cc b/google/protobuf/stubs/strutil.cc
+index a898259..d7f673d 100644
+--- a/google/protobuf/stubs/strutil.cc
++++ b/google/protobuf/stubs/strutil.cc
+@@ -38,6 +38,8 @@
+ #include <stdio.h>
+ #include <iterator>
+ 
++#include "mozilla/FloatingPoint.h"
++
+ #ifdef _WIN32
+ // MSVC has only _snprintf, not snprintf.
+ //
+@@ -56,8 +58,7 @@ namespace google {
+ namespace protobuf {
+ 
+ inline bool IsNaN(double value) {
+-  // NaN is never equal to anything, even itself.
+-  return value != value;
++  return ::mozilla::IsNaN(value);
+ }
+ 
+ // These are defined as macros on some platforms.  #undef them so that we can
+diff --git a/google/protobuf/stubs/strutil.h b/google/protobuf/stubs/strutil.h
+index 4178ac9..6cf2382 100644
+--- a/google/protobuf/stubs/strutil.h
++++ b/google/protobuf/stubs/strutil.h
+@@ -337,6 +337,7 @@ inline uint32 strtou32(const char *nptr, char **endptr, int base) {
+ // For now, long long is 64-bit on all the platforms we care about, so these
+ // functions can simply pass the call to strto[u]ll.
+ inline int64 strto64(const char *nptr, char **endptr, int base) {
++  static_assert(sizeof(int64) == sizeof(long long), "Protobuf needs sizeof(int64) == sizeof(long long)");
+   GOOGLE_COMPILE_ASSERT(sizeof(int64) == sizeof(long long),
+                         sizeof_int64_is_not_sizeof_long_long);
+   return strtoll(nptr, endptr, base);
+diff --git a/google/protobuf/stubs/type_traits.h b/google/protobuf/stubs/type_traits.h
+index e41f5e6..0ef166b 100644
+--- a/google/protobuf/stubs/type_traits.h
++++ b/google/protobuf/stubs/type_traits.h
+@@ -112,10 +112,8 @@ template<> struct is_integral<int> : true_type { };
+ template<> struct is_integral<unsigned int> : true_type { };
+ template<> struct is_integral<long> : true_type { };
+ template<> struct is_integral<unsigned long> : true_type { };
+-#ifdef HAVE_LONG_LONG
+ template<> struct is_integral<long long> : true_type { };
+ template<> struct is_integral<unsigned long long> : true_type { };
+-#endif
+ template <class T> struct is_integral<const T> : is_integral<T> { };
+ template <class T> struct is_integral<volatile T> : is_integral<T> { };
+ template <class T> struct is_integral<const volatile T> : is_integral<T> { };
+diff --git a/google/protobuf/wire_format.cc b/google/protobuf/wire_format.cc
+index 6bdfcd6..fc6210c 100644
+--- a/google/protobuf/wire_format.cc
++++ b/google/protobuf/wire_format.cc
+@@ -824,20 +824,25 @@ void WireFormat::SerializeFieldWithCachedSizes(
+       HANDLE_PRIMITIVE_TYPE(BOOL, bool, Bool, Bool)
+ #undef HANDLE_PRIMITIVE_TYPE
+ 
+-#define HANDLE_TYPE(TYPE, TYPE_METHOD, CPPTYPE_METHOD)                       \
+-      case FieldDescriptor::TYPE_##TYPE:                                     \
+-        WireFormatLite::Write##TYPE_METHOD(                                  \
+-              field->number(),                                               \
+-              field->is_repeated() ?                                         \
+-                message_reflection->GetRepeated##CPPTYPE_METHOD(             \
+-                  message, field, j) :                                       \
+-                message_reflection->Get##CPPTYPE_METHOD(message, field),     \
+-              output);                                                       \
++      case FieldDescriptor::TYPE_GROUP:
++        WireFormatLite::WriteGroup(
++              field->number(),
++              field->is_repeated() ?
++                message_reflection->GetRepeatedMessage(
++                  message, field, j) :
++                message_reflection->GetMessage(message, field),
++              output);
+         break;
+ 
+-      HANDLE_TYPE(GROUP  , Group  , Message)
+-      HANDLE_TYPE(MESSAGE, Message, Message)
+-#undef HANDLE_TYPE
++      case FieldDescriptor::TYPE_MESSAGE:
++        WireFormatLite::WriteMessage(
++              field->number(),
++              field->is_repeated() ?
++                message_reflection->GetRepeatedMessage(
++                  message, field, j) :
++                message_reflection->GetMessage(message, field),
++              output);
++        break;
+ 
+       case FieldDescriptor::TYPE_ENUM: {
+         const EnumValueDescriptor* value = field->is_repeated() ?
+diff --git a/google/protobuf/wire_format_lite.h b/google/protobuf/wire_format_lite.h
+index 21aa488..14b3feb 100644
+--- a/google/protobuf/wire_format_lite.h
++++ b/google/protobuf/wire_format_lite.h
+@@ -40,6 +40,7 @@
+ #ifndef GOOGLE_PROTOBUF_WIRE_FORMAT_LITE_H__
+ #define GOOGLE_PROTOBUF_WIRE_FORMAT_LITE_H__
+ 
++#include <algorithm>
+ #include <string>
+ #include <google/protobuf/stubs/common.h>
+ #include <google/protobuf/message_lite.h>
+diff --git a/google/protobuf/wire_format_lite_inl.h b/google/protobuf/wire_format_lite_inl.h
+index 4e8ac9b..feb2254 100644
+--- a/google/protobuf/wire_format_lite_inl.h
++++ b/google/protobuf/wire_format_lite_inl.h
+@@ -380,7 +380,7 @@ inline bool WireFormatLite::ReadPackedFixedSizePrimitive(
+ #else
+     values->Reserve(old_entries + new_entries);
+     CType value;
+-    for (int i = 0; i < new_entries; ++i) {
++    for (uint32 i = 0; i < new_entries; ++i) {
+       if (!ReadPrimitive<CType, DeclaredType>(input, &value)) return false;
+       values->AddAlreadyReserved(value);
+     }

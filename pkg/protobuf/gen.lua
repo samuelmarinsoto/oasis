@@ -1,13 +1,15 @@
--- vendored protobuf (2.6-era with mozilla patches), compiled from the
--- shared UXP checkout that pkg/uxp fetches (see pkg/uxp/libjpeg for
--- the borrowed-sources pattern). gt compiled exactly this set as
--- toolkit/components/protobuf; the backend defines mirror its
--- backend.mk (the Mutex/once implementations are behind HAVE_PTHREAD,
--- HAVE_ZLIB gates gzip_stream.cc, NO_STATIC_INITIALIZER matches the
--- vendored vintage). Unlike the rest of the gecko dialect, this code
--- uses dynamic_cast and throws: rtti + exceptions stay on.
-set('srcdir', '$basedir/pkg/uxp/src/toolkit/components/protobuf/src')
-
+-- google protobuf 2.6.1, the 2.x vintage the gecko consumers and their
+-- checked-in .pb files are written against (modern protobuf is a
+-- different library: never bump). Sources are the release tarball plus
+-- mozilla's compiler-portability delta (patch/m-c-changes.patch); the
+-- local fetch.sh strips the tarball root so $srcdir IS protobuf's src/.
+--
+-- gt (toolkit/components/protobuf/backend.mk) compiled exactly this set
+-- with -D NDEBUG -D TRIMMED and the three backend defines below; no
+-- config.h (the patched stubs select their own compiler quirks), no
+-- protoc (the generated .pb files are checked into the gecko tree).
+-- Unlike the gecko dialect this code uses dynamic_cast and throws:
+-- rtti + exceptions stay on.
 cflags{
 	'-D NDEBUG',
 	'-D TRIMMED=1',
@@ -23,14 +25,11 @@ cflags{
 }
 
 pkg.deps = {
-	'pkg/uxp/fetch',
 	'pkg/zlib/headers',
+	'pkg/uxp/fetch',
 	'$gendir/mfbt',
 }
 
--- the exact gt set: the two unification wrappers' members plus the
--- three standalone objects (extension_set_heavy, text_format,
--- wire_format); no test-lib, no java
 lib('libprotobuf.a', [[
 	google/protobuf/(
 		descriptor.cc
@@ -74,8 +73,9 @@ lib('libprotobuf.a', [[
 ]])
 
 -- stage the mfbt closure strutil.cc's mozilla/FloatingPoint.h include
--- pulls in, as pkg/uxp/libjpeg does (the shared-tree files themselves
--- are claimed by the umbrella fetch)
+-- pulls in, borrowed from the shared uxp checkout (the
+-- pkg/uxp/libjpeg pattern)
+pkg.deps[#pkg.deps + 1] = 'pkg/uxp/fetch'
 phony('mfbt', copy('$outdir/include/mozilla', '$basedir/pkg/uxp/src/mfbt', {
 	'Assertions.h',
 	'Attributes.h',
@@ -151,3 +151,5 @@ pkg.hdrs = copy('$outdir/include/google/protobuf', '$srcdir/google/protobuf', {
 	'stubs/template_util.h',
 	'stubs/type_traits.h',
 })
+
+fetch 'local'

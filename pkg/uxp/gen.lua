@@ -28,6 +28,5 @@ subgen 'libmkv'
 subgen 'psshparser'
 subgen 'libstagefright'
 subgen 'libjpeg'
-subgen 'protobuf'
 
 fetch 'git'
